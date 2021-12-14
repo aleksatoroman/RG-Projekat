@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = -DIMGUI_IMPL_OPENGL_LOADER_GLAD
 
-CXX_INCLUDES = -I/home/aleksa/Desktop/RG-projekat/project_base/libs/imgui/include -I/home/aleksa/Desktop/RG-projekat/project_base/libs/glad/include
+CXX_INCLUDES = -I/home/aleksa/Desktop/RG-projekat/RG-Projekat/libs/imgui/include -I/home/aleksa/Desktop/RG-projekat/RG-Projekat/libs/glad/include
 
 CXX_FLAGS = -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -O3 -g -std=gnu++14
 

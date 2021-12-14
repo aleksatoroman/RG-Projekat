@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/aleksa/Desktop/RG-projekat/project_base/src/main.cpp" "/home/aleksa/Desktop/RG-projekat/project_base/cmake-build-debug/CMakeFiles/project_base.dir/src/main.cpp.o"
+  "/home/aleksa/Desktop/RG-projekat/RG-Projekat/src/main.cpp" "/home/aleksa/Desktop/RG-projekat/RG-Projekat/cmake-build-debug/CMakeFiles/project_base.dir/src/main.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 
@@ -31,9 +31,9 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
 
 # Targets to which this target links.
 set(CMAKE_TARGET_LINKED_INFO_FILES
-  "/home/aleksa/Desktop/RG-projekat/project_base/cmake-build-debug/libs/glad/CMakeFiles/glad.dir/DependInfo.cmake"
-  "/home/aleksa/Desktop/RG-projekat/project_base/cmake-build-debug/CMakeFiles/STB_IMAGE.dir/DependInfo.cmake"
-  "/home/aleksa/Desktop/RG-projekat/project_base/cmake-build-debug/libs/imgui/CMakeFiles/imgui.dir/DependInfo.cmake"
+  "/home/aleksa/Desktop/RG-projekat/RG-Projekat/cmake-build-debug/libs/glad/CMakeFiles/glad.dir/DependInfo.cmake"
+  "/home/aleksa/Desktop/RG-projekat/RG-Projekat/cmake-build-debug/CMakeFiles/STB_IMAGE.dir/DependInfo.cmake"
+  "/home/aleksa/Desktop/RG-projekat/RG-Projekat/cmake-build-debug/libs/imgui/CMakeFiles/imgui.dir/DependInfo.cmake"
   )
 
 # Fortran module output directory.
