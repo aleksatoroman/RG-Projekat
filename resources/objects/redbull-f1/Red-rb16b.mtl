@@ -1,0 +1,10 @@
+newmtl body
+Ns 96.078431
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.749020 0.737250 0.737250
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd body.jpg
+map_Ks specular-metalic.jpg
