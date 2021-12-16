@@ -185,12 +185,12 @@ int main() {
 
     // Shaders
 
-    Shader shader_rb_car("resources/shaders/rb_car_shader.vs", "resources/shaders/rb_car_shader.fs");
+  //  Shader shader_rb_car("resources/shaders/rb_car_shader.vs", "resources/shaders/rb_car_shader.fs");
     Shader spotlightShader("resources/shaders/spotlightShader.vs","resources/shaders/spotlightShader.fs");
     Shader platformShader("resources/shaders/rb_car_shader.vs","resources/shaders/rb_car_shader.fs");
     // Ocitavanje modela formule
-   Model rb_car("resources/objects/redbull-f1/Redbull-rb16b.obj");
-   rb_car.SetShaderTextureNamePrefix("material.");
+  // Model rb_car("resources/objects/redbull-f1/Redbull-rb16b.obj");
+   //rb_car.SetShaderTextureNamePrefix("material.");
 
 
     Model platformModel("resources/objects/platform/platform.obj");
@@ -301,37 +301,37 @@ int main() {
         glm::mat4 model = glm::mat4(1.0f);
 
         //Crtanje automobila
-        shader_rb_car.use();
-        shader_rb_car.setMat4("projection", projection);
-        shader_rb_car.setMat4("view", view);
+       // shader_rb_car.use();
+        //shader_rb_car.setMat4("projection", projection);
+       // shader_rb_car.setMat4("view", view);
 
-        model = glm::mat4(1.0f);
-        shader_rb_car.setMat4("model", model);
+      //  model = glm::mat4(1.0f);
+      //  shader_rb_car.setMat4("model", model);
 
-        shader_rb_car.setFloat("material.shininess", 32.0f);
-        shader_rb_car.setVec3("viewPos", programState->camera.Position);
+      //  shader_rb_car.setFloat("material.shininess", 32.0f);
+      //  shader_rb_car.setVec3("viewPos", programState->camera.Position);
 
-        shader_rb_car.setVec3("spotLight.position", programState->spotLight.position);
-        shader_rb_car.setVec3("spotLight.direction", programState->spotLight.direction);
+      //  shader_rb_car.setVec3("spotLight.position", programState->spotLight.position);
+       // shader_rb_car.setVec3("spotLight.direction", programState->spotLight.direction);
 
-        shader_rb_car.setVec3("spotLight.ambient", programState->spotLight.ambient);
-        shader_rb_car.setVec3("spotLight.diffuse", programState->spotLight.diffuse);
-        shader_rb_car.setVec3("spotLight.specular", programState->spotLight.specular);
-        shader_rb_car.setFloat("spotLight.constant", programState->spotLight.constant);
-        shader_rb_car.setFloat("spotLight.linear", programState->spotLight.linear);
-        shader_rb_car.setFloat("spotLight.quadratic",programState->spotLight.quadratic);
-        shader_rb_car.setFloat("spotLight.cutOff", programState->spotLight.cutOff);
-        shader_rb_car.setFloat("spotLight.outerCutOff", programState->spotLight.outerCutOff);
+      //  shader_rb_car.setVec3("spotLight.ambient", programState->spotLight.ambient);
+      //  shader_rb_car.setVec3("spotLight.diffuse", programState->spotLight.diffuse);
+      //  shader_rb_car.setVec3("spotLight.specular", programState->spotLight.specular);
+      //  shader_rb_car.setFloat("spotLight.constant", programState->spotLight.constant);
+       // shader_rb_car.setFloat("spotLight.linear", programState->spotLight.linear);
+      //  shader_rb_car.setFloat("spotLight.quadratic",programState->spotLight.quadratic);
+     //   shader_rb_car.setFloat("spotLight.cutOff", programState->spotLight.cutOff);
+      //  shader_rb_car.setFloat("spotLight.outerCutOff", programState->spotLight.outerCutOff);
 
        // rb_car.Draw(shader_rb_car);
 
         //crtanje platforme
        platformShader.use();
-        shader_rb_car.setMat4("projection", projection);
-        shader_rb_car.setMat4("view", view);
+        platformShader.setMat4("projection", projection);
+        platformShader.setMat4("view", view);
 
         model = glm::mat4(1.0f);
-        shader_rb_car.setMat4("model", model);
+       platformShader.setMat4("model", model);
 
         platformShader.setFloat("material.shininess", 32.0f);
         platformShader.setVec3("viewPos", programState->camera.Position);
