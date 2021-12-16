@@ -122,9 +122,9 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
     float distance = length(light.position - fragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
     // spotlight intensity
-    //   float theta = dot(lightDir, normalize(-light.direction));
+    float theta = dot(lightDir, normalize(-light.direction));
     //   theta = 1 treba jos malo da se istestira jer kada se stavi po defaultu, javljaju se bagovi ali deluje da lepo radi ovako
-    float theta = 1;
+//    float theta = 1;
     float epsilon = light.cutOff - light.outerCutOff;
     float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
 

@@ -416,7 +416,7 @@ void DrawImGui(ProgramState *programState) {
         ImGui::SliderFloat("Float slider", &f, 0.0, 1.0);
         ImGui::ColorEdit3("Background color", (float *) &programState->clearColor);
         ImGui::DragFloat3("Pozicija lampe", (float*)&programState->spotLight.position);
-//
+
         ImGui::InputDouble("spotLight.constant", &programState->spotLight.constant);
         ImGui::InputDouble("spotLight.linear", &programState->spotLight.linear);
         ImGui::InputDouble("spotLight.quadratic", &programState->spotLight.quadratic);
