@@ -2,6 +2,9 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
+
+
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -181,14 +184,19 @@ int main() {
     glEnable(GL_DEPTH_TEST);
 
     // Shaders
+
     Shader shader_rb_car("resources/shaders/rb_car_shader.vs", "resources/shaders/rb_car_shader.fs");
     Shader spotlightShader("resources/shaders/spotlightShader.vs","resources/shaders/spotlightShader.fs");
-
+    Shader platformShader("resources/shaders/rb_car_shader.vs","resources/shaders/rb_car_shader.fs");
     // Ocitavanje modela formule
    Model rb_car("resources/objects/redbull-f1/Redbull-rb16b.obj");
    rb_car.SetShaderTextureNamePrefix("material.");
 
-   // Svi objekti koji su osvetljenji lampom treba da koriste ovu strukturu za spotlight (ako bude vise lampi, pravi se niz)
+
+    Model platformModel("resources/objects/platform/platform.obj");
+    platformModel.SetShaderTextureNamePrefix("material.");
+
+    // Svi objekti koji su osvetljenji lampom treba da koriste ovu strukturu za spotlight (ako bude vise lampi, pravi se niz)
    // TODO podloga treba da se ucita i napravi na isti nacin sa ovim shaderom. Bice Bag da kada se postavi podloga, mali deo ispod auta ce biti potpuno osvetljen, ali kada namestimo senke to nece biti slucaj
 
     SpotLight& spotLight = programState->spotLight;
@@ -315,7 +323,34 @@ int main() {
         shader_rb_car.setFloat("spotLight.cutOff", programState->spotLight.cutOff);
         shader_rb_car.setFloat("spotLight.outerCutOff", programState->spotLight.outerCutOff);
 
-        rb_car.Draw(shader_rb_car);
+       // rb_car.Draw(shader_rb_car);
+
+        //crtanje platforme
+       platformShader.use();
+        shader_rb_car.setMat4("projection", projection);
+        shader_rb_car.setMat4("view", view);
+
+        model = glm::mat4(1.0f);
+        shader_rb_car.setMat4("model", model);
+
+        platformShader.setFloat("material.shininess", 32.0f);
+        platformShader.setVec3("viewPos", programState->camera.Position);
+
+        platformShader.setVec3("spotLight.position", programState->spotLight.position);
+        platformShader.setVec3("spotLight.direction", programState->spotLight.direction);
+
+        platformShader.setVec3("spotLight.ambient", programState->spotLight.ambient);
+        platformShader.setVec3("spotLight.diffuse", programState->spotLight.diffuse);
+        platformShader.setVec3("spotLight.specular", programState->spotLight.specular);
+        platformShader.setFloat("spotLight.constant", programState->spotLight.constant);
+        platformShader.setFloat("spotLight.linear", programState->spotLight.linear);
+        platformShader.setFloat("spotLight.quadratic",programState->spotLight.quadratic);
+        platformShader.setFloat("spotLight.cutOff", programState->spotLight.cutOff);
+        platformShader.setFloat("spotLight.outerCutOff", programState->spotLight.outerCutOff);
+
+
+
+        platformModel.Draw(platformShader);
 
         //crtanje reflektora
         glBindVertexArray(lightCubeVAO);

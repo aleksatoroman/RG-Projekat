@@ -1,0 +1,10 @@
+/home/mouzhacker/RG-Projekat/cmake-build-mouzzzhacker/CMakeFiles/rebuild_cache.dir
+/home/mouzhacker/RG-Projekat/cmake-build-mouzzzhacker/CMakeFiles/project_base.dir
+/home/mouzhacker/RG-Projekat/cmake-build-mouzzzhacker/CMakeFiles/edit_cache.dir
+/home/mouzhacker/RG-Projekat/cmake-build-mouzzzhacker/CMakeFiles/STB_IMAGE.dir
+/home/mouzhacker/RG-Projekat/cmake-build-mouzzzhacker/libs/glad/CMakeFiles/edit_cache.dir
+/home/mouzhacker/RG-Projekat/cmake-build-mouzzzhacker/libs/glad/CMakeFiles/rebuild_cache.dir
+/home/mouzhacker/RG-Projekat/cmake-build-mouzzzhacker/libs/glad/CMakeFiles/glad.dir
+/home/mouzhacker/RG-Projekat/cmake-build-mouzzzhacker/libs/imgui/CMakeFiles/rebuild_cache.dir
+/home/mouzhacker/RG-Projekat/cmake-build-mouzzzhacker/libs/imgui/CMakeFiles/edit_cache.dir
+/home/mouzhacker/RG-Projekat/cmake-build-mouzzzhacker/libs/imgui/CMakeFiles/imgui.dir
