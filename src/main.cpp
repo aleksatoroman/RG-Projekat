@@ -251,7 +251,7 @@ int main() {
      * Iskoristi ovo za postavljanje koordinata modela
     */
 
-    float vertices[] = {
+    float cubeVertices[] = {
             // positions          // normals           // texture coords
             -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
             0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  0.0f,
@@ -304,10 +304,48 @@ int main() {
 
     glBindVertexArray(lightCubeVAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+
+    // floor data
+    float floorVertices[] = {
+            // positions          //normals            // texture coords
+            1.0f,  0.0f, 1.0f,    0.0f, 1.0f, 0.0f,    10.0f, 10.0f,
+            1.0f, 0.0f, -1.0f,    0.0f, 1.0f, 0.0f,    10.0f, 0.0f,
+            -1.0f, 0.0f, 1.0f,    0.0f, 1.0f, 0.0f,    0.0f, 10.0f,
+            -1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f,    0.0f, 0.0f
+    };
+    unsigned int floorIndices[] = {
+            0, 1, 3, // first triangle
+            0, 2, 3  // second triangle
+    };
+    unsigned int floorVBO, floorVAO, floorEBO;
+    glGenVertexArrays(1, &floorVAO);
+    glGenBuffers(1, &floorVBO);
+    glGenBuffers(1, &floorEBO);
+
+    glBindVertexArray(floorVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, floorVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(floorVertices), floorVertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, floorEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(floorIndices), floorIndices, GL_STATIC_DRAW);
+
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    // normals attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    // texture coord attribute
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    unsigned int floorTextureDiffuse = loadTexture("resources/textures/floor/floorr.jpg");
+    unsigned int floorTextureSpecular = loadTexture("resources/textures/floor/floor_specular.jpeg");
 
     // render petlja
     programState->camera.MovementSpeed = 7.0f; // Brzina pomeranja na tastaturi
@@ -378,6 +416,17 @@ int main() {
         shader_rb_car.setMat4("model", model);
         tyresModel.Draw(shader_rb_car);
         shader_rb_car.setInt("hasPointLight",0);
+
+        // crtanje podloge
+        glBindVertexArray(floorVAO);
+        model = glm::mat4(1.0f);
+        model = glm::scale(model, glm::vec3(10.0f,10.0f,10.0f));
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, floorTextureDiffuse);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, floorTextureSpecular);
+        shader_rb_car.setMat4("model", model);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         //crtanje spotlight reflektora
         glBindVertexArray(lightCubeVAO);
