@@ -27,6 +27,8 @@ void processInput(GLFWwindow *window);
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 
+unsigned int loadTexture(char const *path);
+
 // resolution
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
@@ -59,6 +61,22 @@ struct SpotLight {
     }
 };
 
+struct PointLight {
+    glm::vec3 position;
+
+    double constant;
+    double linear;
+    double quadratic;
+
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+
+    PointLight(){
+        position = glm::vec3(6.0f, 6.0f, 5.0f);
+    }
+};
+
 // moze da se doda sta god, mora samo posle ako hoce da se sacuva da se navede i u SaveToFile i u LoadFromFile
 struct ProgramState {
     bool ImGuiEnabled = false;
@@ -69,6 +87,8 @@ struct ProgramState {
 
     glm::vec3 clearColor = glm::vec3(0.0f);
     SpotLight spotLight;
+    PointLight pointLight;
+    glm::vec3 tyresPosition = glm::vec3(5.0f, 1.0f, 0.0f);
 
     //
     ProgramState()
@@ -94,7 +114,10 @@ void ProgramState::SaveToFile(std::string filename) {
         << camera.Position.z << '\n'
         << camera.Front.x << '\n'
         << camera.Front.y << '\n'
-        << camera.Front.z << '\n';
+        << camera.Front.z << '\n'
+        << tyresPosition.x << '\n'
+        << tyresPosition.y << '\n'
+        << tyresPosition.z << '\n';
 }
 
 void ProgramState::LoadFromFile(std::string filename) {
@@ -112,7 +135,10 @@ void ProgramState::LoadFromFile(std::string filename) {
            >> camera.Position.z
            >> camera.Front.x
            >> camera.Front.y
-           >> camera.Front.z;
+           >> camera.Front.z
+           >> tyresPosition.x
+           >> tyresPosition.y
+           >> tyresPosition.z;
     }
 }
 
@@ -184,23 +210,24 @@ int main() {
     Shader spotlightShader("resources/shaders/spotlightShader.vs","resources/shaders/spotlightShader.fs");
 
     // Ocitavanje modela formule
-   Model rb_car("resources/objects/redbull-f1/Redbull-rb16b.obj");
-   //rb_car.SetShaderTextureNamePrefix("material.");
+   Model carModel("resources/objects/redbull-f1/Redbull-rb16b.obj");
+   carModel.SetShaderTextureNamePrefix("material.");
 
-
-    Model platformModel("resources/objects/platform/platform.obj");
-    platformModel.SetShaderTextureNamePrefix("material.");
+    //tyres
+    Model tyresModel("resources/objects/pile-of-tires/source/tire.fbx");
+    tyresModel.SetShaderTextureNamePrefix("material.");
+    unsigned int tyresTextureDiffuse = loadTexture("resources/objects/pile-of-tires/textures/TexturesCom_Various_TireCar_1K_albedo.png");
+    unsigned int tyresTextureSpecular = loadTexture("resources/objects/pile-of-tires/textures/TexturesCom_Various_TireCar_1K_ao.png");
 
     // Svi objekti koji su osvetljenji lampom treba da koriste ovu strukturu za spotlight (ako bude vise lampi, pravi se niz)
    // TODO podloga treba da se ucita i napravi na isti nacin sa ovim shaderom. Bice Bag da kada se postavi podloga, mali deo ispod auta ce biti potpuno osvetljen, ali kada namestimo senke to nece biti slucaj
 
     SpotLight& spotLight = programState->spotLight;
+    PointLight& pointLight = programState->pointLight;
 
     // gleda u (0,0,0) gde je auto, pozicija je definisana u samom konstruktoru
-
-    // ovo je kritcno, trenutno nema efekta kada se prebaci u shader jer je ta vrednost u shaderu konstanta(theta=1) tako da bolje i da se ne sklanja trenutno
-    spotLight.direction = -glm::normalize(programState->spotLight.position - glm::vec3(0.0f));
-    //
+    // direction se i azurira u zavisnosti od pozicije samog svetla u render petlji
+    spotLight.direction = glm::normalize(glm::vec3(0.0f) - programState->spotLight.position);
     spotLight.ambient = glm::vec3(0.0f,0.0f,0.0f);
     spotLight.diffuse = glm::vec3(1.0f,1.0f,1.0f);
     spotLight.specular = glm::vec3(1.0f,1.0f,1.0f);
@@ -209,6 +236,15 @@ int main() {
     spotLight.quadratic = 0.0075f;
     spotLight.cutOff = glm::cos(glm::radians(30.5f));
     spotLight.outerCutOff = glm::cos(glm::radians(45.0f));
+
+    // pozicija je predefinisana
+    pointLight.position = programState->pointLight.position;                   // trenutno spotlight osvetljava formulu a pointlight osvetljava sve
+    pointLight.ambient = glm::vec3(0.0f,0.0f,0.0f);
+    pointLight.diffuse = glm::vec3(0.5f,0.5f,0.5f);
+    pointLight.specular = glm::vec3(1.0f,1.0f,1.0f);
+    pointLight.constant = 1.0f;
+    pointLight.linear = 0.09f;
+    pointLight.quadratic = 0.032f;
 
 
     /* TODO treba da se zameni ovaj kocka lampion sa pavi objekat lampom
@@ -277,7 +313,7 @@ int main() {
     programState->camera.MovementSpeed = 7.0f; // Brzina pomeranja na tastaturi
     while (!glfwWindowShouldClose(window)) {
         // FPS lock
-        float currentFrame = glfwGetTime();
+        float currentFrame = (float)glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
@@ -299,15 +335,26 @@ int main() {
         shader_rb_car.use();
         shader_rb_car.setMat4("projection", projection);
         shader_rb_car.setMat4("view", view);
-
         model = glm::mat4(1.0f);
         shader_rb_car.setMat4("model", model);
+
+
+        shader_rb_car.setInt("hasPointLight",1); // kada je 1 ima pointlight svetlo, kada je 0 nema point light svetlo
+        shader_rb_car.setVec3("pointLights[0].position", programState->pointLight.position);
+        shader_rb_car.setVec3("pointLights[0].ambient", programState->pointLight.ambient);
+        shader_rb_car.setVec3("pointLights[0].diffuse", programState->pointLight.diffuse);
+        shader_rb_car.setVec3("pointLights[0].specular", programState->pointLight.specular);
+        shader_rb_car.setFloat("pointLights[0].constant", programState->pointLight.constant);
+        shader_rb_car.setFloat("pointLights[0].linear", programState->pointLight.linear);
+        shader_rb_car.setFloat("pointLights[0].quadratic",programState->pointLight.quadratic);
+
 
         shader_rb_car.setFloat("material.shininess", 32.0f);
         shader_rb_car.setVec3("viewPos", programState->camera.Position);
 
+        // spotlight configurations
         shader_rb_car.setVec3("spotLight.position", programState->spotLight.position);
-        spotLight.direction = -glm::normalize(programState->spotLight.position - glm::vec3(0.0f));
+        spotLight.direction = glm::normalize(glm::vec3(0.0f) - programState->spotLight.position);
         shader_rb_car.setVec3("spotLight.direction", programState->spotLight.direction);
 
         shader_rb_car.setVec3("spotLight.ambient", programState->spotLight.ambient);
@@ -319,21 +366,37 @@ int main() {
         shader_rb_car.setFloat("spotLight.cutOff", programState->spotLight.cutOff);
         shader_rb_car.setFloat("spotLight.outerCutOff", programState->spotLight.outerCutOff);
 
-        rb_car.Draw(shader_rb_car);
-        //crtanje platforme
+        carModel.Draw(shader_rb_car);
+        // crtanje guma
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(programState->tyresPosition));
+        model = glm::rotate(model, glm::radians(30.0f), glm::vec3(0.0,1.0,0.0));
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, tyresTextureDiffuse);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, tyresTextureSpecular);
+        shader_rb_car.setMat4("model", model);
+        tyresModel.Draw(shader_rb_car);
+        shader_rb_car.setInt("hasPointLight",0);
 
-
-
-        //crtanje reflektora
+        //crtanje spotlight reflektora
         glBindVertexArray(lightCubeVAO);
         model = glm::mat4(1.0f);
+        model = glm::scale(model, glm::vec3(0.8,0.8,0.8));
         model=glm::translate(model, programState->spotLight.position);
         spotlightShader.use();
         spotlightShader.setMat4("view", view);
         spotlightShader.setMat4("projection", projection);
         spotlightShader.setMat4("model", model);
-
         glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        //crtanje pointlight svetla
+        model = glm::mat4(1.0f);
+        model = glm::scale(model, glm::vec3(0.5f,0.5f,0.5f));
+        model = glm::translate(model, programState->pointLight.position);
+        spotlightShader.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
 
         // imgui
         if (programState->ImGuiEnabled)
@@ -415,8 +478,20 @@ void DrawImGui(ProgramState *programState) {
         ImGui::Text("Hello text");
         ImGui::SliderFloat("Float slider", &f, 0.0, 1.0);
         ImGui::ColorEdit3("Background color", (float *) &programState->clearColor);
-        ImGui::DragFloat3("Pozicija lampe", (float*)&programState->spotLight.position);
 
+        // spotlight position
+        ImGui::DragFloat3("Pozicija spotlight reflektora", (float*)&programState->spotLight.position);
+        // point light position
+        ImGui::DragFloat3("Pozicija pointlight svetla", (float*)&programState->pointLight.position);
+        // tyres position
+        ImGui::DragFloat3("Pozicija guma",(float*)&programState->tyresPosition);
+
+        // point light attenuation
+        ImGui::InputDouble("pointLight.constant", &programState->pointLight.constant);
+        ImGui::InputDouble("pointLight.linear", &programState->pointLight.linear);
+        ImGui::InputDouble("pointLight.quadratic", &programState->pointLight.quadratic);
+
+        // spotlight attenuation
         ImGui::InputDouble("spotLight.constant", &programState->spotLight.constant);
         ImGui::InputDouble("spotLight.linear", &programState->spotLight.linear);
         ImGui::InputDouble("spotLight.quadratic", &programState->spotLight.quadratic);
@@ -448,4 +523,40 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         }
     }
+}
+unsigned int loadTexture(char const *path)
+{
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+
+    int width, height, nrComponents;
+    unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
+    if (data)
+    {
+        GLenum format;
+        if (nrComponents == 1)
+            format = GL_RED;
+        else if (nrComponents == 3)
+            format = GL_RGB;
+        else if (nrComponents == 4)
+            format = GL_RGBA;
+
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        stbi_image_free(data);
+    }
+    else
+    {
+        std::cout << "Texture failed to load at path: " << path << std::endl;
+        stbi_image_free(data);
+    }
+
+    return textureID;
 }
