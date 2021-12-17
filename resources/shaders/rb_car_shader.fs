@@ -55,6 +55,8 @@ uniform SpotLight spotLight;
 uniform Material material;
 
 uniform int hasPointLight = 0;
+uniform int hasSpotLight = 0;
+uniform int hasDirLight = 0;
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
@@ -66,15 +68,17 @@ void main()
     vec3 viewDir = normalize(viewPos - FragPos);
 
     vec3 result = vec3(0.0f);
-    //result = CalcDirLight(dirLight, norm,viewDir);
-
+    if(hasDirLight == 1){
+            result = CalcDirLight(dirLight, norm,viewDir);
+    }
     for(int i = 0; i < NR_POINT_LIGHTS; i++){
         if (hasPointLight == 1){
             result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);
         }
     }
-
-    result += CalcSpotLight(spotLight, norm, FragPos, viewDir);
+    if(hasSpotLight == 1){
+        result += CalcSpotLight(spotLight, norm, FragPos, viewDir);
+    }
     FragColor = vec4(result, 1.0);
 
     // FragColor = vec4(1.0);
