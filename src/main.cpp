@@ -95,15 +95,22 @@ struct ProgramState {
     glm::vec3 carPosition = glm::vec3(0.0f, 1.205f, 0.45f);
     glm::vec3 platformPosition = glm::vec3(0.0f, 0.4321f, 0.0f);
     glm::vec3 trophyPosition = glm::vec3(5.0f,1.0f,7.0f);
-    //sijalice
+    //reflektori
     glm::vec3 spotlightPositions[4] = {
             glm::vec3(5.0f, 5.0f, -5.0f),
             glm::vec3(-5.0f, 5.0f, 5.0f),
             glm::vec3(-5.0f, 5.0f, -5.0f),
             glm::vec3(5.0f, 5.0f, 5.0f)
     };
+    //sijalice
+    glm::vec3 circlePositions[4] = {
+            glm::vec3(3.92f, 4.45f, -3.92f),
+            glm::vec3(-3.92f, 4.45f, 3.92f),
+            glm::vec3(-3.92f, 4.45f, -3.92f),
+            glm::vec3(3.92f, 4.45f, 3.92f)
+    };
 
-    // ovo posle se ne menja
+            // ovo posle se ne menja
     ProgramState()
         :camera(glm::vec3(0.0f, 0.0f, 0.0f)){};
 
@@ -572,8 +579,36 @@ int main() {
         spotlightShader.setMat4("projection", projection);
         for(int i = 0; i < 4; i++){
             model = glm::mat4(1.0f);
-            //model = glm::scale(model, glm::vec3(0.24f,0.24f,0.24f));
-            model = glm::translate(model, programState->spotlightPositions[i]);
+            model = glm::scale(model, glm::vec3(1.2f,1.2f,1.2f));
+            model = glm::translate(model, programState->circlePositions[i]);
+            float rotation;
+            switch(i){
+                case 0:{
+                    rotation = 2.1f;
+                    model= glm::rotate(model, rotation, glm::vec3(1.0f, 0.0f, 1.0f));
+                    break;
+                }
+                case 1:{
+                    rotation = -2.1f;
+                    model= glm::rotate(model, rotation, glm::vec3(1.0f, 0.0f, 1.0f));
+                    break;
+                }
+                case 2:{
+                    rotation = 2.1f;
+                    model= glm::rotate(model, rotation, glm::vec3(1.0f, 0.0f, -1.0f));
+                    break;
+                }
+                case 3:{
+                    rotation = -2.1f;
+                    model= glm::rotate(model, rotation, glm::vec3(1.0f, 0.0f, -1.0f));
+
+                    break;
+                }
+            }
+
+
+
+
             glm::vec3 boja;
 
             if(checkSpotlights[i])
@@ -768,6 +803,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         if(allLightsActivated){
             allLightsActivated = !allLightsActivated;
             for(int i = 0; i < 4; i++) {
+                checkSpotlights[i]=false;
                 std::string ime = "checkSpotlight[";
                 ime.append(to_string(i));
                 ime.append("]");
@@ -777,6 +813,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         else{
             allLightsActivated = !allLightsActivated;
             for(int i = 0; i < 4; i++){
+                checkSpotlights[i]=true;
 
                 std::string ime = "checkSpotlight[";
                 ime.append(to_string(i));
