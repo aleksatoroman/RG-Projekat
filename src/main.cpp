@@ -30,6 +30,8 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 
 unsigned int loadTexture(char const *path);
 
+
+
 void hasLights(Shader& shader, bool directional, bool pointLight, bool spotlight);
 
 // resolution
@@ -44,6 +46,11 @@ bool firstMouse = true;
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+
+
+
+
 
 struct SpotLight {
     glm::vec3 position;
@@ -85,7 +92,6 @@ struct ProgramState {
     bool ImGuiEnabled = false;
     Camera camera;
     bool CameraMouseMovementUpdateEnabled = true;
-
     // --Ovde ide ono sto mi dodajemo, ostalo se ne dira--
 
     glm::vec3 clearColor = glm::vec3(0.0f);
@@ -160,7 +166,7 @@ bool checkSpotlights[] = {
         false,false,false,false
 };
 bool allLightsActivated = false;
-
+bool antialiasing=true;
 
 ProgramState *programState;
 Shader *shader_rb_car;
@@ -176,6 +182,10 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_SAMPLES, 4);
+
+
+
+
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -402,8 +412,6 @@ int main() {
         // update funkcija
         processInput(window);
 
-        //msaa antialiasing
-        glEnable(GL_MULTISAMPLE);
 
         // boja i dubina
         glClearColor(programState->clearColor.r, programState->clearColor.g, programState->clearColor.b, 1.0f);
@@ -796,6 +804,19 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
             shader_rb_car->setInt("checkSpotlight[3]", 1);
         }
     }
+    if(key == GLFW_KEY_M && action == GLFW_PRESS){
+        if (antialiasing== true) {
+            glDisable(GL_MULTISAMPLE);
+            antialiasing=!antialiasing;
+        }
+       else {
+            glEnable(GL_MULTISAMPLE);
+            antialiasing = !antialiasing;
+        }
+
+        }
+
+
     if(key == GLFW_KEY_G && action == GLFW_PRESS){
         shader_rb_car->use();
         if(allLightsActivated){
