@@ -175,6 +175,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_SAMPLES, 4);
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -401,6 +402,9 @@ int main() {
         // update funkcija
         processInput(window);
 
+        //msaa antialiasing
+        glEnable(GL_MULTISAMPLE);
+
         // boja i dubina
         glClearColor(programState->clearColor.r, programState->clearColor.g, programState->clearColor.b, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -572,8 +576,18 @@ int main() {
         trophy.Draw(*shader_rb_car);
 
 
+        glBindVertexArray(lightCubeVAO);
+        model = glm::mat4(1.0f);
+        model = glm::scale(model, glm::vec3(0.8,0.8,0.8));
+        model=glm::translate(model, programState->spotLight.position);
+        spotlightShader.use();
+        spotlightShader.setMat4("view", view);
+        spotlightShader.setMat4("projection", projection);
+        spotlightShader.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
-        // TODO postaviti sijalice tamo gde su i reflektori
+
+        //sijalice
         spotlightShader.use();
         spotlightShader.setMat4("view", view);
         spotlightShader.setMat4("projection", projection);
@@ -814,7 +828,6 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
             allLightsActivated = !allLightsActivated;
             for(int i = 0; i < 4; i++){
                 checkSpotlights[i]=true;
-
                 std::string ime = "checkSpotlight[";
                 ime.append(to_string(i));
                 ime.append("]");
