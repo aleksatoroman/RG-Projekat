@@ -574,6 +574,15 @@ int main() {
             model = glm::mat4(1.0f);
             //model = glm::scale(model, glm::vec3(0.24f,0.24f,0.24f));
             model = glm::translate(model, programState->spotlightPositions[i]);
+            glm::vec3 boja;
+
+            if(checkSpotlights[i])
+                boja=glm::vec3 (1.0f);
+            else
+                boja=glm::vec3(0.0f);
+
+
+            spotlightShader.setVec3("Color",boja);
             spotlightShader.setMat4("model", model);
             circle.Draw(spotlightShader);
         }
@@ -700,7 +709,7 @@ void DrawImGui(ProgramState *programState) {
 }
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
+    if (key == GLFW_KEY_B && action == GLFW_PRESS) {
         programState->ImGuiEnabled = !programState->ImGuiEnabled;
         if (programState->ImGuiEnabled) {
             programState->CameraMouseMovementUpdateEnabled = false;
