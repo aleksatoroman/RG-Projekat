@@ -575,18 +575,6 @@ int main() {
 
         trophy.Draw(*shader_rb_car);
 
-
-        glBindVertexArray(lightCubeVAO);
-        model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(0.8,0.8,0.8));
-        model=glm::translate(model, programState->spotLight.position);
-        spotlightShader.use();
-        spotlightShader.setMat4("view", view);
-        spotlightShader.setMat4("projection", projection);
-        spotlightShader.setMat4("model", model);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-
-
         //sijalice
         spotlightShader.use();
         spotlightShader.setMat4("view", view);
@@ -619,10 +607,6 @@ int main() {
                     break;
                 }
             }
-
-
-
-
             glm::vec3 boja;
 
             if(checkSpotlights[i])
@@ -758,7 +742,7 @@ void DrawImGui(ProgramState *programState) {
 }
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_B && action == GLFW_PRESS) {
+    if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
         programState->ImGuiEnabled = !programState->ImGuiEnabled;
         if (programState->ImGuiEnabled) {
             programState->CameraMouseMovementUpdateEnabled = false;
