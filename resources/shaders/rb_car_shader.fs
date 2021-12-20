@@ -61,7 +61,7 @@ uniform int hasDirLight = 0;
 
 uniform int checkSpotlight[4];
 
-uniform int proba = 0;
+uniform float transparency = 1.0;
 
 
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
@@ -85,18 +85,18 @@ void main()
         }
     }
     if(hasSpotLight == 1){
-        for(int i = 0; i < NR_SPOT_LIGHTS; i++){
-            if(checkSpotlight[i] == 1){
+        for (int i = 0; i < NR_SPOT_LIGHTS; i++){
+            if (checkSpotlight[i] == 1){
                 result += CalcSpotLight(spotLight[i], norm, FragPos, viewDir);
             }
         }
     }
-    FragColor = vec4(result, 1.0);
+    FragColor = vec4(result, transparency);
 
 
     // FragColor = vec4(1.0);
 
-    // FragColor = texture(material.texture_diffuse1, TexCoords);
+    //FragColor = texture(material.texture_diffuse1, TexCoords);
 
 }
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)

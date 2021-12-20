@@ -34,6 +34,8 @@ unsigned int loadTexture(char const *path);
 
 void hasLights(Shader& shader, bool directional, bool pointLight, bool spotlight);
 
+
+
 // resolution
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
@@ -46,11 +48,6 @@ bool firstMouse = true;
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
-
-
-
-
-
 
 struct SpotLight {
     glm::vec3 position;
@@ -88,12 +85,12 @@ struct PointLight {
 };
 
 struct Prozor{
-        glm::vec3 position;
-        float rotateX;
-        float rotateY;
-        float rotateZ;
+    glm::vec3 position;
+    float rotateX;
+    float rotateY;
+    float rotateZ;
 
-        float windowScaleFactor;
+    float windowScaleFactor;
 };
 
 void initializeTransparentWindows(vector<Prozor> &prozori);
@@ -111,25 +108,14 @@ struct ProgramState {
     glm::vec3 tyresPosition = glm::vec3(6.0f, 0.39f, 0.0f);
     glm::vec3 carPosition = glm::vec3(0.0f, 1.205f, 0.45f);
     glm::vec3 platformPosition = glm::vec3(0.0f, 0.4321f, 0.0f);
-    glm::vec3 trophyPosition = glm::vec3(5.0f,1.0f,7.0f);
-    glm::vec3 tablePosition = glm::vec3(0.0f,0.0f,0.0f);
+    glm::vec3 trophyPosition = glm::vec3(-5.170f,1.2f,6.6f);
+    glm::vec3 tablePosition = glm::vec3(-4.0f,0.0f,3.8f);
 
     vector<Prozor> prozori;
 
-    vector<glm::vec3> windows
-            {
-                    glm::vec3(-5.5f,1.723f,5.56f),
-                    glm::vec3(-5.950f,1.723f,7.050f),
-                    glm::vec3(-6.03,1.723,6.900f),
-                    glm::vec3(-4.69f,1.723f,7.350f),
-                    glm::vec3(-5.8f, 2.723f, 6.365f)
-            };
-    vector<float> rotateX = {0.0f, 0.0f, 0.0f, 0.0f, 90.0f};
-    vector<float> rotateY = {-20.0f,-20.0f,68.5f,68.5f,0.0f};
-    vector<float> rotateZ = {0.0f, 0.0f, 0.0f, 0.0f, 20.0f};
-
-    float tableScaleFactor = 1.0f;
+    float tableScaleFactor = 1.5f;
     float windowScaleFactor = 1.2f;
+
     //reflektori
     glm::vec3 spotlightPositions[4] = {
             glm::vec3(5.0f, 5.0f, -5.0f),
@@ -166,29 +152,7 @@ void ProgramState::SaveToFile(std::string filename) {
         << camera.Position.z << '\n'
         << camera.Front.x << '\n'
         << camera.Front.y << '\n'
-        << camera.Front.z << '\n'
-        << trophyPosition.x << '\n'
-        << trophyPosition.y << '\n'
-        << trophyPosition.z << '\n'
-        << tablePosition.x << '\n'
-        << tablePosition.y << '\n'
-        << tablePosition.z << '\n'
-        << tableScaleFactor <<'\n'
-        << windows[0].x << '\n'
-        << windows[0].y << '\n'
-        << windows[0].z << '\n'
-        << windows[1].x << '\n'
-        << windows[1].y << '\n'
-        << windows[1].z << '\n'
-        << windows[2].x << '\n'
-        << windows[2].y << '\n'
-        << windows[2].z << '\n'
-        << windows[3].x << '\n'
-        << windows[3].y << '\n'
-        << windows[3].z << '\n'
-        << windows[4].x << '\n'
-        << windows[4].y << '\n'
-        << windows[4].z << '\n';
+        << camera.Front.z << '\n';
 }
 
 void ProgramState::LoadFromFile(std::string filename) {
@@ -203,31 +167,11 @@ void ProgramState::LoadFromFile(std::string filename) {
            >> camera.Position.z
            >> camera.Front.x
            >> camera.Front.y
-           >> camera.Front.z
-           >> trophyPosition.x
-           >> trophyPosition.y
-           >> trophyPosition.z
-           >> tablePosition.x
-           >> tablePosition.y
-           >> tablePosition.z
-           >> tableScaleFactor
-           >> windows[0].x
-           >> windows[0].y
-           >> windows[0].z
-           >> windows[1].x
-           >> windows[1].y
-           >> windows[1].z
-           >> windows[2].x
-           >> windows[2].y
-           >> windows[2].z
-           >> windows[3].x
-           >> windows[3].y
-           >> windows[3].z
-           >> windows[4].x
-           >> windows[4].y
-           >> windows[4].z;
+           >> camera.Front.z;
     }
 }
+
+
 
 bool checkSpotlights[] = {
         false,false,false,false
@@ -249,10 +193,6 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_SAMPLES, 4);
-
-
-
-
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -344,7 +284,6 @@ int main() {
     Model trophy("resources/objects/trophy/trophy.obj");
     trophy.SetShaderTextureNamePrefix("material.");
 
-
     // model stola
     Model tableTrophy("resources/objects/table_model/102195.obj");
     tableTrophy.SetShaderTextureNamePrefix("material.");
@@ -354,7 +293,6 @@ int main() {
 
     SpotLight& spotLight = programState->spotLight;
     PointLight& pointLight = programState->pointLight;
-
 
     // inicijalizacija prozora
     vector<Prozor> &prozori = programState->prozori;
@@ -480,9 +418,6 @@ int main() {
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
-
-
-
     // transparent Vertices
     float transparentVertices[] = {
             // positions         // texture Coords (swapped y coordinates because texture is flipped upside down)
@@ -494,18 +429,31 @@ int main() {
             1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
             1.0f,  0.5f,  0.0f,  1.0f,  0.0f
     };
+    float transparentVertices2[] = {
+            // positions         // texture Coords (swapped y coordinates because texture is flipped upside down)
+            0.0f,  0.5f,  0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, -0.5f,  0.0f, 0.0f, 1.0f, 0.0f, 0.0f,  1.0f,
+            1.0f, -0.5f,  0.0f, 0.0f, 1.0f, 0.0f, 1.0f,  1.0f,
+
+            0.0f,  0.5f,  0.0f, 0.0f, 1.0f, 0.0f, 0.0f,  0.0f,
+            1.0f, -0.5f,  0.0f, 0.0f, 1.0f, 0.0f, 1.0f,  1.0f,
+            1.0f,  0.5f,  0.0f, 0.0f, 1.0f, 0.0f, 1.0f,  0.0f
+    };
+
     // transparent VAO
     unsigned int transparentVAO, transparentVBO;
     glGenVertexArrays(1, &transparentVAO);
     glGenBuffers(1, &transparentVBO);
     glBindVertexArray(transparentVAO);
     glBindBuffer(GL_ARRAY_BUFFER, transparentVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(transparentVertices), transparentVertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(transparentVertices2), transparentVertices2, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-    glBindVertexArray(0);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
     // transparenta tekstura - prozor
     unsigned int transparentTexture = loadTexture("resources/textures/window.png");
 
@@ -522,16 +470,13 @@ int main() {
 
         // update funkcija
         processInput(window);
-
         // sort transparent objects
         std::sort(prozori.begin(), prozori.end(),[cameraPosition = programState->camera.Position]
                 (const Prozor a, const Prozor b){
-            float d1 = glm::distance(a.position, cameraPosition);
-            float d2 = glm::distance(b.position, cameraPosition);
-            return  d1 > d2;
+                    float d1 = glm::distance(a.position, cameraPosition);
+                    float d2 = glm::distance(b.position, cameraPosition);
+                    return  d1 > d2;
         });
-
-
         // boja i dubina
         glClearColor(programState->clearColor.r, programState->clearColor.g, programState->clearColor.b, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -545,6 +490,7 @@ int main() {
 
         //Crtanje automobila
         shader_rb_car->use();
+        shader_rb_car->setFloat("transparency", 1.0f);
         hasLights(*shader_rb_car, false, true, true);
         shader_rb_car->setMat4("projection", projection);
         shader_rb_car->setMat4("view", view);
@@ -554,7 +500,6 @@ int main() {
         model = glm::translate(model, programState->carPosition);
         shader_rb_car->setMat4("model", model);
 
-//        shader_rb_car->setInt("hasPointLight",1); // kada je 1 ima pointlight svetlo, kada je 0 nema point light svetlo
         shader_rb_car->setVec3("pointLights[0].position", programState->pointLight.position);
         shader_rb_car->setVec3("pointLights[0].ambient", programState->pointLight.ambient);
         shader_rb_car->setVec3("pointLights[0].diffuse", programState->pointLight.diffuse);
@@ -623,8 +568,8 @@ int main() {
         shader_rb_car->setFloat("spotLight[3].cutOff", programState->spotLight.cutOff);
         shader_rb_car->setFloat("spotLight[3].outerCutOff", programState->spotLight.outerCutOff);
 
-
         carModel.Draw(*shader_rb_car);
+
         // crtanje guma
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(programState->tyresPosition));
@@ -710,30 +655,15 @@ int main() {
         shader_rb_car->setMat4("model", model);
         tableTrophy.Draw(*shader_rb_car);
 
-        // crtanje prozora
-        transparentShader.use();
-        transparentShader.setMat4("projection", projection);
-        transparentShader.setMat4("view", view);
-        glBindVertexArray(transparentVAO);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, transparentTexture);
-        for(int i = 0; i < prozori.size(); ++i){
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, prozori[i].position);
-            model = glm::scale(model, glm::vec3(prozori[i].windowScaleFactor));
-            model = glm::rotate(model, glm::radians(prozori[i].rotateX),glm::vec3(1.0,0.0,0.0));
-            model = glm::rotate(model, glm::radians(prozori[i].rotateY),glm::vec3(0.0,1.0,0.0));
-            model = glm::rotate(model, glm::radians(prozori[i].rotateZ),glm::vec3(0.0,0.0,1.0));
-            transparentShader.setMat4("model", model);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-        }
 
-        //sijalice
+        // TODO postaviti sijalice tamo gde su i reflektori
         spotlightShader.use();
         spotlightShader.setMat4("view", view);
         spotlightShader.setMat4("projection", projection);
         for(int i = 0; i < 4; i++){
+            glm::vec3 boja;
             model = glm::mat4(1.0f);
+            boja = checkSpotlights[i] ? glm::vec3(1.0f) : glm::vec3(0.0f);
             model = glm::scale(model, glm::vec3(1.2f,1.2f,1.2f));
             model = glm::translate(model, programState->circlePositions[i]);
             float rotation;
@@ -760,13 +690,10 @@ int main() {
                     break;
                 }
             }
-            glm::vec3 boja;
-
             if(checkSpotlights[i])
                 boja=glm::vec3 (1.0f);
             else
                 boja=glm::vec3(0.0f);
-
 
             spotlightShader.setVec3("Color",boja);
             spotlightShader.setMat4("model", model);
@@ -779,6 +706,25 @@ int main() {
         model = glm::translate(model, programState->pointLight.position);
         spotlightShader.setMat4("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        // prozori ( blending) , mora na kraju nakon svih opaque objekata (sa alpha=1.0f)
+        shader_rb_car->use();
+        shader_rb_car->setFloat("transparency", 0.5f);
+        hasLights(*shader_rb_car, false, true, true);
+        glBindVertexArray(transparentVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, transparentTexture);
+
+        for(int i = 0; i < prozori.size(); ++i){
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, prozori[i].position);
+            model = glm::scale(model, glm::vec3(prozori[i].windowScaleFactor));
+            model = glm::rotate(model, glm::radians(prozori[i].rotateX),glm::vec3(1.0,0.0,0.0));
+            model = glm::rotate(model, glm::radians(prozori[i].rotateY),glm::vec3(0.0,1.0,0.0));
+            model = glm::rotate(model, glm::radians(prozori[i].rotateZ),glm::vec3(0.0,0.0,1.0));
+            shader_rb_car->setMat4("model", model);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
 
         // imgui
         if (programState->ImGuiEnabled)
@@ -856,10 +802,9 @@ void DrawImGui(ProgramState *programState) {
 
 
     {
-        static float f = 0.0f;
         ImGui::Begin("Hello window");
         ImGui::Text("Hello text");
-        ImGui::SliderFloat("Float slider", &f, 0.0, 1.0);
+        //ImGui::SliderFloat("Transparency slider", &programState->transparency, 0.0, 1.0);
         ImGui::ColorEdit3("Background color", (float *) &programState->clearColor);
 
         // point light position
@@ -867,6 +812,12 @@ void DrawImGui(ProgramState *programState) {
 
         // pozicija trofeja
         ImGui::DragFloat3("Pozicija trofeja", (float*)&programState->trophyPosition);
+
+        // pozicija stola
+        ImGui::DragFloat3("Pozicija stola", (float*)&programState->tablePosition);
+        //Scale factor
+        ImGui::InputFloat("Table scale factor", (float*)&programState->tableScaleFactor);
+
 
         // point light attenuation
         ImGui::InputDouble("pointLight.constant", &programState->pointLight.constant);
@@ -967,7 +918,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         if(allLightsActivated){
             allLightsActivated = !allLightsActivated;
             for(int i = 0; i < 4; i++) {
-                checkSpotlights[i]=false;
+                checkSpotlights[i] = false;
                 std::string ime = "checkSpotlight[";
                 ime.append(to_string(i));
                 ime.append("]");
@@ -1047,7 +998,6 @@ void hasLights(Shader& shader, bool directional, bool pointLight, bool spotlight
         shader.setInt("hasSpotLight", 1);
     }
 }
-
 void initializeTransparentWindows(vector<Prozor> &prozori){
     Prozor p1;
     p1.position = glm::vec3(-5.5f,1.723f,5.69f);
