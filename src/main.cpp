@@ -87,6 +87,17 @@ struct PointLight {
     }
 };
 
+struct Prozor{
+        glm::vec3 position;
+        float rotateX;
+        float rotateY;
+        float rotateZ;
+
+        float windowScaleFactor;
+};
+
+void initializeTransparentWindows(vector<Prozor> &prozori);
+
 // moze da se doda sta god, mora samo posle ako hoce da se sacuva da se navede i u SaveToFile i u LoadFromFile
 struct ProgramState {
     bool ImGuiEnabled = false;
@@ -101,6 +112,24 @@ struct ProgramState {
     glm::vec3 carPosition = glm::vec3(0.0f, 1.205f, 0.45f);
     glm::vec3 platformPosition = glm::vec3(0.0f, 0.4321f, 0.0f);
     glm::vec3 trophyPosition = glm::vec3(5.0f,1.0f,7.0f);
+    glm::vec3 tablePosition = glm::vec3(0.0f,0.0f,0.0f);
+
+    vector<Prozor> prozori;
+
+    vector<glm::vec3> windows
+            {
+                    glm::vec3(-5.5f,1.723f,5.56f),
+                    glm::vec3(-5.950f,1.723f,7.050f),
+                    glm::vec3(-6.03,1.723,6.900f),
+                    glm::vec3(-4.69f,1.723f,7.350f),
+                    glm::vec3(-5.8f, 2.723f, 6.365f)
+            };
+    vector<float> rotateX = {0.0f, 0.0f, 0.0f, 0.0f, 90.0f};
+    vector<float> rotateY = {-20.0f,-20.0f,68.5f,68.5f,0.0f};
+    vector<float> rotateZ = {0.0f, 0.0f, 0.0f, 0.0f, 20.0f};
+
+    float tableScaleFactor = 1.0f;
+    float windowScaleFactor = 1.2f;
     //reflektori
     glm::vec3 spotlightPositions[4] = {
             glm::vec3(5.0f, 5.0f, -5.0f),
@@ -140,7 +169,26 @@ void ProgramState::SaveToFile(std::string filename) {
         << camera.Front.z << '\n'
         << trophyPosition.x << '\n'
         << trophyPosition.y << '\n'
-        << trophyPosition.z << '\n';
+        << trophyPosition.z << '\n'
+        << tablePosition.x << '\n'
+        << tablePosition.y << '\n'
+        << tablePosition.z << '\n'
+        << tableScaleFactor <<'\n'
+        << windows[0].x << '\n'
+        << windows[0].y << '\n'
+        << windows[0].z << '\n'
+        << windows[1].x << '\n'
+        << windows[1].y << '\n'
+        << windows[1].z << '\n'
+        << windows[2].x << '\n'
+        << windows[2].y << '\n'
+        << windows[2].z << '\n'
+        << windows[3].x << '\n'
+        << windows[3].y << '\n'
+        << windows[3].z << '\n'
+        << windows[4].x << '\n'
+        << windows[4].y << '\n'
+        << windows[4].z << '\n';
 }
 
 void ProgramState::LoadFromFile(std::string filename) {
@@ -158,7 +206,26 @@ void ProgramState::LoadFromFile(std::string filename) {
            >> camera.Front.z
            >> trophyPosition.x
            >> trophyPosition.y
-           >> trophyPosition.z;
+           >> trophyPosition.z
+           >> tablePosition.x
+           >> tablePosition.y
+           >> tablePosition.z
+           >> tableScaleFactor
+           >> windows[0].x
+           >> windows[0].y
+           >> windows[0].z
+           >> windows[1].x
+           >> windows[1].y
+           >> windows[1].z
+           >> windows[2].x
+           >> windows[2].y
+           >> windows[2].z
+           >> windows[3].x
+           >> windows[3].y
+           >> windows[3].z
+           >> windows[4].x
+           >> windows[4].y
+           >> windows[4].z;
     }
 }
 
@@ -242,6 +309,7 @@ int main() {
 
     // Shaders
     Shader spotlightShader("resources/shaders/spotlightShader.vs","resources/shaders/spotlightShader.fs");
+    Shader transparentShader("resources/shaders/transparent_shader.vs" , "resources/shaders/transparent_shader.fs");
 
     // Ocitavanje modela formule
     Model carModel("resources/objects/redbull-f1/Redbull-rb16b.obj");
@@ -276,11 +344,22 @@ int main() {
     Model trophy("resources/objects/trophy/trophy.obj");
     trophy.SetShaderTextureNamePrefix("material.");
 
+
+    // model stola
+    Model tableTrophy("resources/objects/table_model/102195.obj");
+    tableTrophy.SetShaderTextureNamePrefix("material.");
+
     // Svi objekti koji su osvetljenji lampom treba da koriste ovu strukturu za spotlight (ako bude vise lampi, pravi se niz)
    // TODO podloga treba da se ucita i napravi na isti nacin sa ovim shaderom. Bice Bag da kada se postavi podloga, mali deo ispod auta ce biti potpuno osvetljen, ali kada namestimo senke to nece biti slucaj
 
     SpotLight& spotLight = programState->spotLight;
     PointLight& pointLight = programState->pointLight;
+
+
+    // inicijalizacija prozora
+    vector<Prozor> &prozori = programState->prozori;
+    initializeTransparentWindows(prozori);
+
 
     // gleda u (0,0,0) gde je auto, pozicija je definisana u samom konstruktoru
     // direction se i azurira u zavisnosti od pozicije samog svetla u render petlji
@@ -401,6 +480,38 @@ int main() {
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
+
+
+
+    // transparent Vertices
+    float transparentVertices[] = {
+            // positions         // texture Coords (swapped y coordinates because texture is flipped upside down)
+            0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+            0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
+            1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+
+            0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+            1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+            1.0f,  0.5f,  0.0f,  1.0f,  0.0f
+    };
+    // transparent VAO
+    unsigned int transparentVAO, transparentVBO;
+    glGenVertexArrays(1, &transparentVAO);
+    glGenBuffers(1, &transparentVBO);
+    glBindVertexArray(transparentVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, transparentVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(transparentVertices), transparentVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glBindVertexArray(0);
+    // transparenta tekstura - prozor
+    unsigned int transparentTexture = loadTexture("resources/textures/window.png");
+
+
+    transparentShader.setInt("texture_diffuse1", 0);
+
     // render petlja
     programState->camera.MovementSpeed = 7.0f; // Brzina pomeranja na tastaturi
     while (!glfwWindowShouldClose(window)) {
@@ -411,6 +522,14 @@ int main() {
 
         // update funkcija
         processInput(window);
+
+        // sort transparent objects
+        std::sort(prozori.begin(), prozori.end(),[cameraPosition = programState->camera.Position]
+                (const Prozor a, const Prozor b){
+            float d1 = glm::distance(a.position, cameraPosition);
+            float d2 = glm::distance(b.position, cameraPosition);
+            return  d1 > d2;
+        });
 
 
         // boja i dubina
@@ -582,6 +701,32 @@ int main() {
         shader_rb_car->setMat4("model", model);
 
         trophy.Draw(*shader_rb_car);
+
+        // sto
+        model = glm::mat4(1.0f);
+        float scale = programState->tableScaleFactor;
+        model = glm::scale(model, glm::vec3(scale));
+        model = glm::translate(model, programState->tablePosition);
+        shader_rb_car->setMat4("model", model);
+        tableTrophy.Draw(*shader_rb_car);
+
+        // crtanje prozora
+        transparentShader.use();
+        transparentShader.setMat4("projection", projection);
+        transparentShader.setMat4("view", view);
+        glBindVertexArray(transparentVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, transparentTexture);
+        for(int i = 0; i < prozori.size(); ++i){
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, prozori[i].position);
+            model = glm::scale(model, glm::vec3(prozori[i].windowScaleFactor));
+            model = glm::rotate(model, glm::radians(prozori[i].rotateX),glm::vec3(1.0,0.0,0.0));
+            model = glm::rotate(model, glm::radians(prozori[i].rotateY),glm::vec3(0.0,1.0,0.0));
+            model = glm::rotate(model, glm::radians(prozori[i].rotateZ),glm::vec3(0.0,0.0,1.0));
+            transparentShader.setMat4("model", model);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
 
         //sijalice
         spotlightShader.use();
@@ -901,4 +1046,46 @@ void hasLights(Shader& shader, bool directional, bool pointLight, bool spotlight
     else{
         shader.setInt("hasSpotLight", 1);
     }
+}
+
+void initializeTransparentWindows(vector<Prozor> &prozori){
+    Prozor p1;
+    p1.position = glm::vec3(-5.5f,1.723f,5.69f);
+    p1.windowScaleFactor = 1.2f;
+    p1.rotateX = 0.0f;
+    p1.rotateY = -20.0f;
+    p1.rotateZ = 0.0f;
+    prozori.push_back(p1);
+
+    Prozor p2;
+    p2.position = glm::vec3(-5.950f,1.723f,7.050f);
+    p2.windowScaleFactor = 1.2f;
+    p2.rotateX = 0.0f;
+    p2.rotateY = -20.0f;
+    p2.rotateZ = 0.0f;
+    prozori.push_back(p2);
+
+    Prozor p3;
+    p3.position = glm::vec3(-6.03f,1.723f,6.900f);
+    p3.windowScaleFactor = 1.2f;
+    p3.rotateX = 0.0f;
+    p3.rotateY = 68.5f;
+    p3.rotateZ = 0.0f;
+    prozori.push_back(p3);
+
+    Prozor p4;
+    p4.position = glm::vec3(-4.69f,1.723f,7.350f);
+    p4.windowScaleFactor = 1.2f;
+    p4.rotateX = 0.0f;
+    p4.rotateY = 68.5f;
+    p4.rotateZ = 0.0f;
+    prozori.push_back(p4);
+
+    Prozor p5;
+    p5.position = glm::vec3(-5.8f,2.352f,6.365f);
+    p5.windowScaleFactor = 1.4f;
+    p5.rotateX = 90.0f;
+    p5.rotateY = 0.0f;
+    p5.rotateZ = 20.0f;
+    prozori.push_back(p5);
 }
