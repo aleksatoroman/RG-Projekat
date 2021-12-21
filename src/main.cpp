@@ -110,7 +110,9 @@ struct ProgramState {
     glm::vec3 platformPosition = glm::vec3(0.0f, 0.4321f, 0.0f);
     glm::vec3 trophyPosition = glm::vec3(-5.170f,1.2f,6.6f);
     glm::vec3 tablePosition = glm::vec3(-4.0f,0.0f,3.8f);
-
+    glm::vec3 pipePosition=glm::vec3 (-13.0f, 2.0f, -13.0f);
+    glm::vec3 propelerPosition=glm::vec3(-0.865f, 0.27f, -0.865f);
+    glm::vec3 krugPosition=glm::vec3(4.38, 4.38f, 4.38f);
     vector<Prozor> prozori;
 
     float tableScaleFactor = 1.5f;
@@ -287,6 +289,14 @@ int main() {
     // model stola
     Model tableTrophy("resources/objects/table_model/102195.obj");
     tableTrophy.SetShaderTextureNamePrefix("material.");
+
+    // model pipe
+    Model pipe("resources/objects/tube/tube.obj");
+    pipe.SetShaderTextureNamePrefix("material.");
+
+    // model propeler
+    Model propeler("resources/objects/propeller/Prop5in.fbx");
+    propeler.SetShaderTextureNamePrefix("material.");
 
     // Svi objekti koji su osvetljenji lampom treba da koriste ovu strukturu za spotlight (ako bude vise lampi, pravi se niz)
    // TODO podloga treba da se ucita i napravi na isti nacin sa ovim shaderom. Bice Bag da kada se postavi podloga, mali deo ispod auta ce biti potpuno osvetljen, ali kada namestimo senke to nece biti slucaj
@@ -655,8 +665,38 @@ int main() {
         shader_rb_car->setMat4("model", model);
         tableTrophy.Draw(*shader_rb_car);
 
+        //pipe
 
-        // TODO postaviti sijalice tamo gde su i reflektori
+        model = glm::mat4(1.0f);
+        model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+        model = glm::translate(model,programState->pipePosition );
+        model= glm::rotate(model, 1.57f, glm::vec3(1.0f, 0.0f, 0.0f));
+        shader_rb_car->setMat4("model", model);
+        pipe.Draw(*shader_rb_car);
+
+        //krug
+        spotlightShader.use();
+        spotlightShader.setMat4("view", view);
+        spotlightShader.setMat4("projection", projection);
+        model = glm::mat4(1.0f);
+        model = glm::scale(model, programState->krugPosition);
+        model = glm::translate(model,glm::vec3(-1.485f,0.0f,-1.485f) );
+        spotlightShader.setVec3("Color",glm::vec3(0.0f));
+        spotlightShader.setMat4("model", model);
+        circle.Draw(spotlightShader);
+
+        //propeler
+
+        model = glm::mat4(1.0f);
+        model = glm::scale(model, glm::vec3(7.5f, 7.5f, 7.5f));
+        model = glm::translate(model,programState->propelerPosition );
+        model= glm::rotate(model, 1.57f, glm::vec3(1.0f, 0.0f, 0.0f));
+        model= glm::rotate(model, 0.25f * currentFrame, glm::vec3(0.0f, 0.0f, 1.0f));
+        shader_rb_car->setMat4("model", model);
+        propeler.Draw(spotlightShader);
+
+
+        // sijalice
         spotlightShader.use();
         spotlightShader.setMat4("view", view);
         spotlightShader.setMat4("projection", projection);
