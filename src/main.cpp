@@ -121,6 +121,12 @@ struct ProgramState {
 
     std::vector<Prozor> prozori;
 
+    glm::vec3 pipePosition=glm::vec3 (-13.0f, 2.0f, -13.0f);
+    glm::vec3 propelerPosition=glm::vec3(-0.865f, 0.27f, -0.865f);
+    glm::vec3 krugPosition=glm::vec3(4.38, 4.38f, 4.38f);
+
+
+
     float tableScaleFactor = 1.5f;
     float windowScaleFactor = 1.2f;
 
@@ -205,8 +211,7 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    // glfw window creation
-    // --------------------
+    // glfw init, create window, glad && callback functions
     GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -219,8 +224,9 @@ int main() {
     glfwSetScrollCallback(window, scroll_callback);
     glfwSetKeyCallback(window, key_callback);
     // tell GLFW to capture our mouse
-    // vratiti na disabled
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+    // TODO , kada treba da se debaguje mora da se stavi na GLFFW_CURSOR_NORMAL inace je GLDF_CURSOR_DISABLED na pocetku
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -262,19 +268,19 @@ int main() {
     Model carModel("resources/objects/redbull-f1/Redbull-rb16b.obj");
     carModel.SetShaderTextureNamePrefix("material.");
 
-    //tyres
+    //model tyres
     Model tyresModel("resources/objects/pile-of-tires/source/tire.fbx");
     tyresModel.SetShaderTextureNamePrefix("material.");
     unsigned int tyresTextureDiffuse = loadTexture("resources/objects/pile-of-tires/textures/TexturesCom_Various_TireCar_1K_albedo.png");
     unsigned int tyresTextureSpecular = loadTexture("resources/objects/pile-of-tires/textures/TexturesCom_Various_TireCar_1K_ao.png");
 
-    //platform
+    //model platform
     Model platform("resources/objects/platform/Rotating_Light_Platform_Final.fbx");
     platform.SetShaderTextureNamePrefix("material.");
     unsigned int platformTextureDiffuse = loadTexture("resources/objects/platform/lambert1_metallic.jpg");
     unsigned int platformTextureSpecular = loadTexture("resources/objects/platform/lambert1_roughness.jpg");
 
-    // podloga
+    // podloga teksture (asfalt diffuse i specular)
     unsigned int floorTextureDiffuse = loadTexture("resources/textures/asphalt.jpg");
     unsigned int floorTextureSpecular = loadTexture("resources/textures/floor/floor_specular.jpeg");
 
@@ -295,8 +301,16 @@ int main() {
     Model tableTrophy("resources/objects/table_model/102195.obj");
     tableTrophy.SetShaderTextureNamePrefix("material.");
 
-    // Svi objekti koji su osvetljenji lampom treba da koriste ovu strukturu za spotlight (ako bude vise lampi, pravi se niz)
-   // TODO podloga treba da se ucita i napravi na isti nacin sa ovim shaderom. Bice Bag da kada se postavi podloga, mali deo ispod auta ce biti potpuno osvetljen, ali kada namestimo senke to nece biti slucaj
+    // model pipe
+    Model pipe("resources/objects/tube/tube.obj");
+    pipe.SetShaderTextureNamePrefix("material.");
+
+    // model propeler
+    Model propeler("resources/objects/propeller/Prop5in.fbx");
+    propeler.SetShaderTextureNamePrefix("material.");
+
+    // Svi objekti koji su osvetljenji lampom treba da koriste shader_rb_car
+   // TODO Namestiti senke ili normal & parallax mapping
 
     SpotLight& spotLight = programState->spotLight;
     PointLight& pointLight = programState->pointLight;
@@ -334,10 +348,8 @@ int main() {
     dirLight.diffuse = glm::vec3(0.3f);
     dirLight.specular = glm::vec3(0.4f);
 
-    /* TODO treba da se zameni ovaj kocka lampion sa pavi objekat lampom
-     * Iskoristi ovo za postavljanje koordinata modela
-    */
 
+    // cube data
     float cubeVertices[] = {
             // positions          // normals           // texture coords
             -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
@@ -383,6 +395,7 @@ int main() {
             -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
     };
 
+    // lightCubeVAO with cube data
     unsigned int VBO, lightCubeVAO;
     glGenVertexArrays(1, &lightCubeVAO);
     glGenBuffers(1, &VBO);
@@ -406,6 +419,7 @@ int main() {
             0, 1, 3, // first triangle
             0, 2, 3  // second triangle
     };
+    // floorVAO with floor data
     unsigned int floorVBO, floorVAO, floorEBO;
     glGenVertexArrays(1, &floorVAO);
     glGenBuffers(1, &floorVBO);
@@ -442,7 +456,7 @@ int main() {
             1.0f,  0.5f,  0.0f, 0.0f, 1.0f, 0.0f, 1.0f,  0.0f
     };
 
-    // transparent VAO
+    // transparent VAO with transparent data
     unsigned int transparentVAO, transparentVBO;
     glGenVertexArrays(1, &transparentVAO);
     glGenBuffers(1, &transparentVBO);
@@ -455,7 +469,6 @@ int main() {
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
-
     // transparenta tekstura - prozor
     unsigned int transparentTexture = loadTexture("resources/textures/window.png");
 
@@ -504,7 +517,7 @@ int main() {
             -1.0f, -1.0f,  1.0f,
             1.0f, -1.0f,  1.0f
     };
-
+    // skyboxVAO with skybox data and texture loading from resources/textures/skybox/
     unsigned int skyboxVAO, skyboxVBO;
     glGenVertexArrays(1, &skyboxVAO);
     glGenBuffers(1, &skyboxVBO);
@@ -529,15 +542,19 @@ int main() {
     skyboxShader.use();
     skyboxShader.setInt("skybox", 0);
 
+    // init blinn at start
+    shader_rb_car->use();
+    shader_rb_car->setBool("blinn", blinn);
+
+    // Brzina pomeranja na tastaturi
+    programState->camera.MovementSpeed = 7.0f;
 
     // render petlja
-    programState->camera.MovementSpeed = 7.0f; // Brzina pomeranja na tastaturi
     while (!glfwWindowShouldClose(window)) {
         // FPS lock
         float currentFrame = (float)glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-
         // update funkcija
         processInput(window);
         // sort transparent objects
@@ -732,6 +749,36 @@ int main() {
         shader_rb_car->setMat4("model", model);
         tableTrophy.Draw(*shader_rb_car);
 
+        //pipe
+        model = glm::mat4(1.0f);
+        model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+        model = glm::translate(model,programState->pipePosition);
+        model= glm::rotate(model, 1.57f, glm::vec3(1.0f, 0.0f, 0.0f));
+        shader_rb_car->setMat4("model", model);
+        pipe.Draw(*shader_rb_car);
+
+        //krug
+        spotlightShader.use();
+        spotlightShader.setMat4("view", view);
+        spotlightShader.setMat4("projection", projection);
+        model = glm::mat4(1.0f);
+        model = glm::scale(model, programState->krugPosition);
+        model = glm::translate(model,glm::vec3(-1.485f,0.0f,-1.485f) );
+        spotlightShader.setVec3("Color",glm::vec3(0.0f));
+        spotlightShader.setMat4("model", model);
+        circle.Draw(spotlightShader);
+
+        //propeler
+
+        model = glm::mat4(1.0f);
+        model = glm::scale(model, glm::vec3(7.5f, 7.5f, 7.5f));
+        model = glm::translate(model,programState->propelerPosition );
+        model= glm::rotate(model, 1.57f, glm::vec3(1.0f, 0.0f, 0.0f));
+        model= glm::rotate(model, 0.25f * currentFrame, glm::vec3(0.0f, 0.0f, 1.0f));
+        shader_rb_car->setMat4("model", model);
+        propeler.Draw(spotlightShader);
+
+        // sijalice
         spotlightShader.use();
         spotlightShader.setMat4("view", view);
         spotlightShader.setMat4("projection", projection);
@@ -782,6 +829,19 @@ int main() {
         spotlightShader.setMat4("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
+        glDepthFunc(GL_LEQUAL);  // zbog nepreciznosti racunanja u pokretnom zarezu se postavlja ova depth funkcija
+        skyboxShader.use();
+        view = glm::mat4(glm::mat3(programState->camera.GetViewMatrix())); // translacija se uklanja zbog osecaja beskonacnosti
+        skyboxShader.setMat4("view", view);
+        skyboxShader.setMat4("projection", projection);
+        // skybox cube
+        glBindVertexArray(skyboxVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(0);
+        glDepthFunc(GL_LESS); // vracamo na feault
+
         // prozori ( blending) , mora na kraju nakon svih opaque objekata (sa alpha=1.0f) i pre skybox-a
         shader_rb_car->use();
         shader_rb_car->setFloat("transparency", 0.5f);
@@ -801,19 +861,7 @@ int main() {
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
 
-        // draw skybox as last
-        glDepthFunc(GL_LEQUAL);  // zbog nepreciznosti racunanja u pokretnom zarezu se postavlja ova depth funkcija
-        skyboxShader.use();
-        view = glm::mat4(glm::mat3(programState->camera.GetViewMatrix())); // translacija se uklanja zbog osecaja beskonacnosti
-        skyboxShader.setMat4("view", view);
-        skyboxShader.setMat4("projection", projection);
-        // skybox cube
-        glBindVertexArray(skyboxVAO);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
-        glDepthFunc(GL_LESS); // vracamo na feault
+
         // imgui
 
         if (programState->ImGuiEnabled)
