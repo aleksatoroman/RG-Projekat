@@ -8,13 +8,13 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/aleksa/Desktop/RG-projekat/RG-Projekat/libs/imgui/src/imgui.cpp" "/home/aleksa/Desktop/RG-projekat/RG-Projekat/cmake-build-debug/libs/imgui/CMakeFiles/imgui.dir/src/imgui.cpp.o"
-  "/home/aleksa/Desktop/RG-projekat/RG-Projekat/libs/imgui/src/imgui_demo.cpp" "/home/aleksa/Desktop/RG-projekat/RG-Projekat/cmake-build-debug/libs/imgui/CMakeFiles/imgui.dir/src/imgui_demo.cpp.o"
-  "/home/aleksa/Desktop/RG-projekat/RG-Projekat/libs/imgui/src/imgui_draw.cpp" "/home/aleksa/Desktop/RG-projekat/RG-Projekat/cmake-build-debug/libs/imgui/CMakeFiles/imgui.dir/src/imgui_draw.cpp.o"
-  "/home/aleksa/Desktop/RG-projekat/RG-Projekat/libs/imgui/src/imgui_impl_glfw.cpp" "/home/aleksa/Desktop/RG-projekat/RG-Projekat/cmake-build-debug/libs/imgui/CMakeFiles/imgui.dir/src/imgui_impl_glfw.cpp.o"
-  "/home/aleksa/Desktop/RG-projekat/RG-Projekat/libs/imgui/src/imgui_impl_opengl3.cpp" "/home/aleksa/Desktop/RG-projekat/RG-Projekat/cmake-build-debug/libs/imgui/CMakeFiles/imgui.dir/src/imgui_impl_opengl3.cpp.o"
-  "/home/aleksa/Desktop/RG-projekat/RG-Projekat/libs/imgui/src/imgui_tables.cpp" "/home/aleksa/Desktop/RG-projekat/RG-Projekat/cmake-build-debug/libs/imgui/CMakeFiles/imgui.dir/src/imgui_tables.cpp.o"
-  "/home/aleksa/Desktop/RG-projekat/RG-Projekat/libs/imgui/src/imgui_widgets.cpp" "/home/aleksa/Desktop/RG-projekat/RG-Projekat/cmake-build-debug/libs/imgui/CMakeFiles/imgui.dir/src/imgui_widgets.cpp.o"
+  "/home/aleksa/Desktop/RG-Projekat/libs/imgui/src/imgui.cpp" "/home/aleksa/Desktop/RG-Projekat/cmake-build-debug/libs/imgui/CMakeFiles/imgui.dir/src/imgui.cpp.o"
+  "/home/aleksa/Desktop/RG-Projekat/libs/imgui/src/imgui_demo.cpp" "/home/aleksa/Desktop/RG-Projekat/cmake-build-debug/libs/imgui/CMakeFiles/imgui.dir/src/imgui_demo.cpp.o"
+  "/home/aleksa/Desktop/RG-Projekat/libs/imgui/src/imgui_draw.cpp" "/home/aleksa/Desktop/RG-Projekat/cmake-build-debug/libs/imgui/CMakeFiles/imgui.dir/src/imgui_draw.cpp.o"
+  "/home/aleksa/Desktop/RG-Projekat/libs/imgui/src/imgui_impl_glfw.cpp" "/home/aleksa/Desktop/RG-Projekat/cmake-build-debug/libs/imgui/CMakeFiles/imgui.dir/src/imgui_impl_glfw.cpp.o"
+  "/home/aleksa/Desktop/RG-Projekat/libs/imgui/src/imgui_impl_opengl3.cpp" "/home/aleksa/Desktop/RG-Projekat/cmake-build-debug/libs/imgui/CMakeFiles/imgui.dir/src/imgui_impl_opengl3.cpp.o"
+  "/home/aleksa/Desktop/RG-Projekat/libs/imgui/src/imgui_tables.cpp" "/home/aleksa/Desktop/RG-Projekat/cmake-build-debug/libs/imgui/CMakeFiles/imgui.dir/src/imgui_tables.cpp.o"
+  "/home/aleksa/Desktop/RG-Projekat/libs/imgui/src/imgui_widgets.cpp" "/home/aleksa/Desktop/RG-Projekat/cmake-build-debug/libs/imgui/CMakeFiles/imgui.dir/src/imgui_widgets.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 
@@ -35,7 +35,7 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
 
 # Targets to which this target links.
 set(CMAKE_TARGET_LINKED_INFO_FILES
-  "/home/aleksa/Desktop/RG-projekat/RG-Projekat/cmake-build-debug/libs/glad/CMakeFiles/glad.dir/DependInfo.cmake"
+  "/home/aleksa/Desktop/RG-Projekat/cmake-build-debug/libs/glad/CMakeFiles/glad.dir/DependInfo.cmake"
   )
 
 # Fortran module output directory.
