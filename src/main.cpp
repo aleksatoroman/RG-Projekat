@@ -298,6 +298,7 @@ int main() {
     Model propeler("resources/objects/propeller/Prop5in.fbx");
     propeler.SetShaderTextureNamePrefix("material.");
 
+
     // Svi objekti koji su osvetljenji lampom treba da koriste ovu strukturu za spotlight (ako bude vise lampi, pravi se niz)
    // TODO podloga treba da se ucita i napravi na isti nacin sa ovim shaderom. Bice Bag da kada se postavi podloga, mali deo ispod auta ce biti potpuno osvetljen, ali kada namestimo senke to nece biti slucaj
 
@@ -331,9 +332,7 @@ int main() {
     pointLight.quadratic = 0.006f;
 
 
-    /* TODO treba da se zameni ovaj kocka lampion sa pavi objekat lampom
-     * Iskoristi ovo za postavljanje koordinata modela
-    */
+
 
     float cubeVertices[] = {
             // positions          // normals           // texture coords
