@@ -193,7 +193,9 @@ bool antialiasing=true;
 
 ProgramState *programState;
 Shader *shader_rb_car;
+
 Shader *skyShader;
+bool colorSky = false;
 
 bool blinn = true;
 
@@ -347,7 +349,7 @@ int main() {
     pointLight.quadratic = 0.006f;
 
     // direction light setup
-    dirLight.direction = glm::vec3(-0.93f, 0.05f, -0.36f);
+    dirLight.direction = glm::vec3(0.07f, 0.08f, -1.0f);
     dirLight.ambient = glm::vec3(0.08f);
     dirLight.diffuse = glm::vec3(0.3f);
     dirLight.specular = glm::vec3(0.4f);
@@ -684,48 +686,58 @@ int main() {
         shader_rb_car->setMat4("model", model);
         tyresModel.Draw(*shader_rb_car);
 
-        // crtanje podloge
-#if 1
-        hasLights(*shader_rb_car, true, false, true);
-        glBindVertexArray(floorVAO);
-        model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(10.0f,10.0f,10.0f));
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, floorTextureDiffuse);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, floorTextureSpecular);
-        shader_rb_car->setMat4("model", model);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-#elif 0
-
+        // skyShader global config
         skyShader->use();
-        model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(10.0f,10.0f,10.0f));
-        skyShader->setMat4("model", model);
         skyShader->setMat4("projection", projection);
         skyShader->setMat4("view", view);
         skyShader->setVec3("cameraPos", programState->camera.Position);
-        glBindVertexArray(floorVAO);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
-#endif
 
-        //Crtanje platforme
-        shader_rb_car->use();
+        // crtanje podloge (moze na dva nacina, standardno ili preko skyboxa)
+        hasLights(*shader_rb_car, true, false, true);
+        glBindVertexArray(floorVAO);
         model = glm::mat4(1.0f);
-        model = glm::translate(model,programState->platformPosition);
+        model = glm::scale(model, glm::vec3(100.0f));
+        if(!colorSky){
+            shader_rb_car->use();
+            shader_rb_car->setMat4("model", model);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, floorTextureDiffuse);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, floorTextureSpecular);
+        }
+        else{
+            skyShader->use();
+            skyShader->setMat4("model", model);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        }
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        //Crtanje platforme (moze isto na 2 nacina)
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, programState->platformPosition);
         model = glm::scale(model, glm::vec3(0.12f, 0.12f, 0.12f));
-        model= glm::rotate(model, 0.25f * currentFrame, glm::vec3(0.0f, 1.0f, 0.0f));
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, platformTextureDiffuse);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, platformTextureSpecular);
-        shader_rb_car->setMat4("model", model);
-        platform.Draw(*shader_rb_car);
+        model = glm::rotate(model, 0.25f * currentFrame, glm::vec3(0.0f, 1.0f, 0.0f));
+
+        if(!colorSky) {
+            shader_rb_car->use();
+            shader_rb_car->setMat4("model", model);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, platformTextureDiffuse);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, platformTextureSpecular);
+            platform.Draw(*shader_rb_car);
+        }
+        else{
+            skyShader->use();
+            skyShader->setMat4("model", model);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+            platform.Draw(*skyShader);
+        }
 
         // lampe (reflektori)
+        shader_rb_car->use();
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureLamp);
         for(int i = 0; i < 4; i++){
@@ -1057,7 +1069,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         }
     }
     if(key == GLFW_KEY_M && action == GLFW_PRESS){
-        if (antialiasing== true) {
+        if (antialiasing) {
             glDisable(GL_MULTISAMPLE);
             antialiasing=!antialiasing;
         }
@@ -1095,6 +1107,12 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         shader_rb_car->use();
         blinn = !blinn;
         shader_rb_car->setBool("blinn", blinn);
+    }
+    if(key == GLFW_KEY_N && action == GLFW_PRESS){
+        colorSky = false;
+    }
+    if(key == GLFW_KEY_R && action == GLFW_PRESS){
+        colorSky = true;
     }
 }
 unsigned int loadTexture(char const *path)
