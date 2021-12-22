@@ -193,6 +193,8 @@ bool antialiasing=true;
 
 ProgramState *programState;
 Shader *shader_rb_car;
+Shader *skyShader;
+
 bool blinn = true;
 
 
@@ -240,6 +242,8 @@ int main() {
 
     programState = new ProgramState;
     shader_rb_car = new Shader("resources/shaders/rb_car_shader.vs", "resources/shaders/rb_car_shader.fs");
+    skyShader = new Shader("resources/shaders/sky_shader.vs","resources/shaders/sky_shader.fs");
+
     programState->LoadFromFile("resources/program_state.txt");
     if (programState->ImGuiEnabled) {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -529,18 +533,21 @@ int main() {
 
     vector<std::string> faces
             {
-                    FileSystem::getPath("resources/textures/skybox/right.jpg"),
-                    FileSystem::getPath("resources/textures/skybox/left.jpg"),
-                    FileSystem::getPath("resources/textures/skybox/top.jpg"),
-                    FileSystem::getPath("resources/textures/skybox/bottom.jpg"),
-                    FileSystem::getPath("resources/textures/skybox/front.jpg"),
-                    FileSystem::getPath("resources/textures/skybox/back.jpg")
+                    FileSystem::getPath("resources/textures/milky_way/right.png"),
+                    FileSystem::getPath("resources/textures/milky_way/left.png"),
+                    FileSystem::getPath("resources/textures/milky_way/top.png"),
+                    FileSystem::getPath("resources/textures/milky_way/bottom.png"),
+                    FileSystem::getPath("resources/textures/milky_way/front.png"),
+                    FileSystem::getPath("resources/textures/milky_way/back.png")
             };
 
     unsigned int cubemapTexture = loadCubemap(faces);
 
     skyboxShader.use();
     skyboxShader.setInt("skybox", 0);
+
+    skyShader->use();
+    skyShader->setInt("skybox", 0);
 
     // init blinn at start
     shader_rb_car->use();
@@ -678,6 +685,7 @@ int main() {
         tyresModel.Draw(*shader_rb_car);
 
         // crtanje podloge
+#if 1
         hasLights(*shader_rb_car, true, false, true);
         glBindVertexArray(floorVAO);
         model = glm::mat4(1.0f);
@@ -688,8 +696,24 @@ int main() {
         glBindTexture(GL_TEXTURE_2D, floorTextureSpecular);
         shader_rb_car->setMat4("model", model);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+#elif 0
+
+        skyShader->use();
+        model = glm::mat4(1.0f);
+        model = glm::scale(model, glm::vec3(10.0f,10.0f,10.0f));
+        skyShader->setMat4("model", model);
+        skyShader->setMat4("projection", projection);
+        skyShader->setMat4("view", view);
+        skyShader->setVec3("cameraPos", programState->camera.Position);
+        glBindVertexArray(floorVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+#endif
 
         //Crtanje platforme
+        shader_rb_car->use();
         model = glm::mat4(1.0f);
         model = glm::translate(model,programState->platformPosition);
         model = glm::scale(model, glm::vec3(0.12f, 0.12f, 0.12f));
@@ -860,7 +884,6 @@ int main() {
             shader_rb_car->setMat4("model", model);
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
-
 
         // imgui
 
@@ -1189,7 +1212,7 @@ unsigned int loadCubemap(vector<std::string> &faces)
         unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
         if (data)
         {
-            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
             stbi_image_free(data);
         }
         else
