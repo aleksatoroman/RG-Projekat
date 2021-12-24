@@ -4,6 +4,7 @@ out vec4 FragColor;
 struct Material {
     sampler2D texture_diffuse1;
     sampler2D texture_specular1;
+    sampler2D texture_normal1;
 
     float shininess;
 };
@@ -48,6 +49,7 @@ struct SpotLight {
 in vec3 FragPos;
 in vec3 Normal;
 in vec2 TexCoords;
+in mat3 TBN;
 
 uniform vec3 viewPos;
 uniform DirLight dirLight;
@@ -63,15 +65,26 @@ uniform int checkSpotlight[4];
 uniform float transparency = 1.0;
 uniform bool blinn;
 
+uniform bool hasNormalMap = false;
+
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 
-
 void main()
 {
 
-    vec3 norm = normalize(Normal);
+    vec3 norm;
+
+    if(!hasNormalMap){
+        norm = normalize(Normal);
+    }
+    else{
+        norm = texture(material.texture_normal1, TexCoords).rgb;
+        norm = normalize(norm * 2.0 - 1.0);
+        norm = normalize(TBN * norm);
+    }
+
     vec3 viewDir = normalize(viewPos - FragPos);
 
     vec3 result = vec3(0.0f);
@@ -93,7 +106,7 @@ void main()
     FragColor = vec4(result, transparency);
 
 
-    // FragColor = vec4(1.0);
+    //FragColor = vec4(1.0);
 
     //FragColor = texture(material.texture_diffuse1, TexCoords);
 

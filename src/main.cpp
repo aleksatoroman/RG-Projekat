@@ -36,7 +36,6 @@ unsigned int loadCubemap(vector<std::string> &faces);
 
 void renderQuad();
 
-
 // resolution
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
@@ -127,7 +126,7 @@ struct ProgramState {
     glm::vec3 propelerPosition=glm::vec3(-0.865f, 0.27f, -0.865f);
     glm::vec3 krugPosition=glm::vec3(4.38, 4.38f, 4.38f);
 
-
+    bool hasNormalMapping = false;
 
     float tableScaleFactor = 1.5f;
     float windowScaleFactor = 1.2f;
@@ -203,7 +202,6 @@ bool blinn = true;
 
 float angle = 0.0f;
 
-
 void DrawImGui(ProgramState *programState);
 
 int main() {
@@ -274,11 +272,6 @@ int main() {
     Shader spotlightShader("resources/shaders/spotlightShader.vs","resources/shaders/spotlightShader.fs");
     Shader skyboxShader("resources/shaders/skybox_shader.vs","resources/shaders/skybox_shader.fs");
 
-    Shader normalShader("resources/shaders/normal_shader.vs","resources/shaders/normal_shader.fs");
-    normalShader.use();
-    normalShader.setInt("diffuseMap", 0);
-    normalShader.setInt("normalMap", 1);
-
     // Ocitavanje modela fofrmule
     Model carModel("resources/objects/redbull-f1/Redbull-rb16b.obj");
     carModel.SetShaderTextureNamePrefix("material.");
@@ -286,8 +279,9 @@ int main() {
     //model tyres
     Model tyresModel("resources/objects/pile-of-tires/source/tire.fbx");
     tyresModel.SetShaderTextureNamePrefix("material.");
-    unsigned int tyresTextureDiffuse = loadTexture("resources/objects/pile-of-tires/textures/TexturesCom_Various_TireCar_1K_albedo.png");
-    unsigned int tyresTextureSpecular = loadTexture("resources/objects/pile-of-tires/textures/TexturesCom_Various_TireCar_1K_ao.png");
+    unsigned int tyresTextureDiffuse = loadTexture("resources/objects/pile-of-tires/textures/TexturesCom_Various_TireCar_512_albedo.png");
+    unsigned int tyresTextureSpecular = loadTexture("resources/objects/pile-of-tires/textures/TexturesCom_Various_TireCar_512_ao.png");
+    unsigned int tyresTextureNormal = loadTexture("resources/objects/pile-of-tires/textures/TexturesCom_Various_TireCar_512_normal.png");
 
     //model platform
     Model platform("resources/objects/platform/Rotating_Light_Platform_Final.fbx");
@@ -298,9 +292,9 @@ int main() {
 
     // podloga teksture (asfalt diffuse i specular)
     // TODO zameniti sa asfaltom kada se zavrsi testiranje sa normal mapping
-    unsigned int floorTextureDiffuse = loadTexture("resources/textures/brick_textures/brickwall.jpg");
-    unsigned int floorTextureSpecular = loadTexture("resources/textures/asphalt_textures/seamless_asphalt_texture_DISP.jpg");
-    unsigned int floorTextureNormal = loadTexture("resources/textures/brick_textures/brickwall_normal.jpg");
+    unsigned int floorTextureDiffuse = loadTexture("resources/textures/beach_texture/Seamless_beach_sand_footsteps_texture.jpg");
+    unsigned int floorTextureSpecular = loadTexture("resources/textures/beach_texture/Seamless_beach_sand_footsteps_texture_SPECULAR.jpg");
+    unsigned int floorTextureNormal = loadTexture("resources/textures/beach_texture/Seamless_beach_sand_footsteps_texture_NORMAL.jpg");
 
 
     // model lampe
@@ -425,43 +419,6 @@ int main() {
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-
-    // floor data
-    float floorVertices[] = {
-            // positions          //normals            // texture coords
-            1.0f,  0.0f, 1.0f,    0.0f, 1.0f, 0.0f,    1.0f, 1.0f,
-            1.0f, 0.0f, -1.0f,    0.0f, 1.0f, 0.0f,    1.0f, 0.0f,
-            -1.0f, 0.0f, 1.0f,    0.0f, 1.0f, 0.0f,    0.0f, 1.0f,
-            -1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f,    0.0f, 0.0f
-    };
-    unsigned int floorIndices[] = {
-            0, 1, 3, // first triangle
-            0, 2, 3  // second triangle
-    };
-    // floorVAO with floor data
-    unsigned int floorVBO, floorVAO, floorEBO;
-    glGenVertexArrays(1, &floorVAO);
-    glGenBuffers(1, &floorVBO);
-    glGenBuffers(1, &floorEBO);
-
-    glBindVertexArray(floorVAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, floorVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(floorVertices), floorVertices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, floorEBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(floorIndices), floorIndices, GL_STATIC_DRAW);
-
-    // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    // normals attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    // texture coord attribute
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-
 
     // windows transparent data
     float transparentVertices[] = {
@@ -683,8 +640,8 @@ int main() {
         shader_rb_car->setVec3("dirLight.diffuse", dirLight.diffuse);
         shader_rb_car->setVec3("dirLight.specular", dirLight.specular);
 
-
-        //carModel.Draw(*shader_rb_car);
+        shader_rb_car->setBool("hasNormalMap", false);
+        carModel.Draw(*shader_rb_car);
 
         // crtanje guma
         model = glm::mat4(1.0f);
@@ -696,8 +653,14 @@ int main() {
         glBindTexture(GL_TEXTURE_2D, tyresTextureDiffuse);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, tyresTextureSpecular);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, tyresTextureNormal);
+        shader_rb_car->use();
         shader_rb_car->setMat4("model", model);
+        shader_rb_car->setBool("hasNormalMap", programState->hasNormalMapping);
         tyresModel.Draw(*shader_rb_car);
+        shader_rb_car->setBool("hasNormalMap", false);
+
 
         // skyShader global config
         skyShader->use();
@@ -705,43 +668,62 @@ int main() {
         skyShader->setMat4("view", view);
         skyShader->setVec3("cameraPos", programState->camera.Position);
 
-        // crtanje podloge (moze na dva nacina, standardno ili preko skyboxa)
-#if 0
-        hasLights(*shader_rb_car, true, false, true);
-        glBindVertexArray(floorVAO);
-        model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(10.0f));
+        // crtanje podloge (moze na dva nacina, standardno ili preko skyboxa, standardno moze ili sa normal mapiranjem ili bez)
+        float stranica = 2.0f;
         if(!colorSky){
-            shader_rb_car->use();
-            shader_rb_car->setMat4("model", model);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, floorTextureDiffuse);
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, floorTextureSpecular);
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(GL_TEXTURE_2D, floorTextureNormal);
+            shader_rb_car->use();
+
+            // ako je trenutno ukljuceno, postaviti shaderu i iscrtati tako i OBAVEZNO skloniti sa shadera dok globalna provera i dalje ostaje azurna
+            shader_rb_car->setBool("hasNormalMap", programState->hasNormalMapping);
+            glm::vec3 firstPosition = glm::vec3(-25.0f * stranica, -25.0f * stranica, 0.0f);
+            model = glm::translate(model, firstPosition);
+            for(int i = 0; i < 50; i++) {
+                for(int j = 0; j < 50; j++){
+                    model = glm::mat4(1.0f);
+                    model = glm::rotate(model, glm::radians(270.0f), glm::normalize(glm::vec3(1.0f,0.0f,0.0f)));
+                    model = glm::translate(model, firstPosition + glm::vec3((float)j * stranica,(float)i * stranica ,0.0f));
+                    shader_rb_car->setMat4("model", model);
+                    renderQuad();
+                }
+            }
+            shader_rb_car->setBool("hasNormalMap", false);
         }
         else{
             skyShader->use();
+            model = glm::mat4(1.0f);
+            model = glm::rotate(model, glm::radians(270.0f), glm::normalize(glm::vec3(1.0f,0.0f,0.0f)));
+            model = glm::scale(model, glm::vec3(25.0f * stranica));
             skyShader->setMat4("model", model);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+            renderQuad();
         }
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         //Crtanje platforme (moze isto na 2 nacina)
-#elif 0
         model = glm::mat4(1.0f);
         model = glm::translate(model, programState->platformPosition);
         model = glm::scale(model, glm::vec3(0.12f, 0.12f, 0.12f));
         model = glm::rotate(model, 0.25f * currentFrame, glm::vec3(0.0f, 1.0f, 0.0f));
 
         if(!colorSky) {
-            shader_rb_car->use();
-            shader_rb_car->setMat4("model", model);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, platformTextureDiffuse);
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, platformTextureSpecular);
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(GL_TEXTURE_2D, platformTextureNormal);
+
+            shader_rb_car->use();
+            shader_rb_car->setMat4("model", model);
+            shader_rb_car->setBool("hasNormalMap", programState->hasNormalMapping);
             platform.Draw(*shader_rb_car);
+            shader_rb_car->setBool("hasNormalMap", false);
         }
         else{
             skyShader->use();
@@ -750,23 +732,6 @@ int main() {
             glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
             platform.Draw(*skyShader);
         }
-#elif 1
-        normalShader.use();
-        normalShader.setMat4("projection", projection);
-        normalShader.setMat4("view", view);
-        // render normal-mapped quad
-        model = glm::mat4(1.0f);
-        model = glm::rotate(model, glm::radians((float)glfwGetTime() * -10.0f), glm::normalize(glm::vec3(1.0, 0.0, 1.0))); // rotate the quad to show normal mapping from multiple directions
-        normalShader.setMat4("model", model);
-        normalShader.setVec3("viewPos", programState->camera.Position);
-        glm::vec3 lightPos(0.5f, 1.0f, 0.3f);
-        normalShader.setVec3("lightPos", lightPos);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, floorTextureDiffuse);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, floorTextureNormal);
-        renderQuad();
-#endif
 
         // lampe (reflektori)
         shader_rb_car->use();
@@ -797,6 +762,7 @@ int main() {
             }
             model= glm::rotate(model, rotation, glm::vec3(0.0f, 1.0f, 0.0f));
             shader_rb_car->setMat4("model", model);
+            shader_rb_car->setBool("hasNormalMap", false);
             lamp.Draw(*shader_rb_car);
         }
 
@@ -805,8 +771,9 @@ int main() {
         model = glm::translate(model, programState->trophyPosition);
         model = glm::scale(model, glm::vec3(0.02f, 0.02f, 0.02f));
         model= glm::rotate(model, 3.6f, glm::vec3(0.0f, 1.0f, 0.0f));
+        shader_rb_car->use();
         shader_rb_car->setMat4("model", model);
-
+        shader_rb_car->setBool("hasNormalMap", false);
         trophy.Draw(*shader_rb_car);
 
         // sto
@@ -814,7 +781,9 @@ int main() {
         float scale = programState->tableScaleFactor;
         model = glm::scale(model, glm::vec3(scale));
         model = glm::translate(model, programState->tablePosition);
+        shader_rb_car->use();
         shader_rb_car->setMat4("model", model);
+        shader_rb_car->setBool("hasNormalMap", false);
         tableTrophy.Draw(*shader_rb_car);
 
         //pipe
@@ -822,8 +791,11 @@ int main() {
         model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
         model = glm::translate(model,programState->pipePosition);
         model= glm::rotate(model, 1.57f, glm::vec3(1.0f, 0.0f, 0.0f));
+        shader_rb_car->use();
         shader_rb_car->setMat4("model", model);
+        shader_rb_car->setBool("hasNormalMap", programState->hasNormalMapping);
         pipe.Draw(*shader_rb_car);
+        shader_rb_car->setBool("hasNormalMap", false);
 
         //krug
         spotlightShader.use();
@@ -837,19 +809,16 @@ int main() {
         circle.Draw(spotlightShader);
 
         //propeler
-
         model = glm::mat4(1.0f);
         model = glm::scale(model, glm::vec3(7.5f, 7.5f, 7.5f));
         model = glm::translate(model,programState->propelerPosition );
         model= glm::rotate(model, 1.57f, glm::vec3(1.0f, 0.0f, 0.0f));
         model= glm::rotate(model, 0.25f * currentFrame, glm::vec3(0.0f, 0.0f, 1.0f));
+        spotlightShader.use();
         shader_rb_car->setMat4("model", model);
         propeler.Draw(spotlightShader);
 
         // sijalice
-        spotlightShader.use();
-        spotlightShader.setMat4("view", view);
-        spotlightShader.setMat4("projection", projection);
         for(int i = 0; i < 4; i++){
             glm::vec3 boja;
             model = glm::mat4(1.0f);
@@ -885,6 +854,7 @@ int main() {
             else
                 boja=glm::vec3(0.0f);
 
+            spotlightShader.use();
             spotlightShader.setVec3("Color",boja);
             spotlightShader.setMat4("model", model);
             circle.Draw(spotlightShader);
@@ -897,6 +867,8 @@ int main() {
         spotlightShader.setMat4("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
+
+        // cubemap
         glDepthFunc(GL_LEQUAL);  // zbog nepreciznosti racunanja u pokretnom zarezu se postavlja ova depth funkcija
         skyboxShader.use();
         view = glm::mat4(glm::mat3(programState->camera.GetViewMatrix())); // translacija se uklanja zbog osecaja beskonacnosti
@@ -925,6 +897,7 @@ int main() {
             model = glm::rotate(model, glm::radians(prozori[i].rotateX),glm::vec3(1.0,0.0,0.0));
             model = glm::rotate(model, glm::radians(prozori[i].rotateY),glm::vec3(0.0,1.0,0.0));
             model = glm::rotate(model, glm::radians(prozori[i].rotateZ),glm::vec3(0.0,0.0,1.0));
+            shader_rb_car->use();
             shader_rb_car->setMat4("model", model);
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
@@ -1014,9 +987,8 @@ void DrawImGui(ProgramState *programState) {
         // point light position
         ImGui::DragFloat3("Pozicija pointlight svetla", (float*)&programState->pointLight.position);
 
-        // ugao rotacije platforme
-        ImGui::DragFloat("Ugao rotacije podloge", &angle,1.0f,0.0f,360.0f);
-        ImGui::DragFloat("Ugao rotacije podloge", &angle,1.0f,0.0f,360.0f);
+        // ugao
+        ImGui::DragFloat("Ugao rotacije podloge", &angle, 1.0f,0.0f,360.0f);
 
         // point light attenuation
         ImGui::InputDouble("pointLight.constant", &programState->pointLight.constant);
@@ -1143,11 +1115,11 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         blinn = !blinn;
         shader_rb_car->setBool("blinn", blinn);
     }
-    if(key == GLFW_KEY_N && action == GLFW_PRESS){
-        colorSky = false;
+    if(key == GLFW_KEY_C && action == GLFW_PRESS){
+        colorSky = !colorSky;
     }
-    if(key == GLFW_KEY_R && action == GLFW_PRESS){
-        colorSky = true;
+    if(key == GLFW_KEY_N && action == GLFW_PRESS){
+        programState->hasNormalMapping = !programState->hasNormalMapping;
     }
 }
 unsigned int loadTexture(char const *path)
@@ -1171,8 +1143,8 @@ unsigned int loadTexture(char const *path)
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT); // for this tutorial: use GL_CLAMP_TO_EDGE to prevent semi-transparent borders. Due to interpolation it takes texels from next repeat
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // for this tutorial: use GL_CLAMP_TO_EDGE to prevent semi-transparent borders. Due to interpolation it takes texels from next repeat
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         stbi_image_free(data);

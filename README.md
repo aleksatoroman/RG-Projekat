@@ -6,6 +6,6 @@ Manual:
 - Press button G to turn on/off all lights.
 - Press button M to turn on/off anti-aliasing
 - Press button B to switch between Phong and Blinn-Phong model of lighting
-- Press N for regular scene shading
-- Press R for skybox partial scene shading
+- Press C to switch between regular shading and skybox shader
+- Press N to switch between normal mapping and regular maping with normals from verteces
 - Press escape to exit
