@@ -292,9 +292,9 @@ int main() {
 
     // podloga teksture (asfalt diffuse i specular)
     // TODO zameniti sa asfaltom kada se zavrsi testiranje sa normal mapping
-    unsigned int floorTextureDiffuse = loadTexture("resources/textures/beach_texture/Seamless_beach_sand_footsteps_texture.jpg");
+    unsigned int floorTextureDiffuse = loadTexture("resources/textures/brick_textures/brickwall.jpg");
     unsigned int floorTextureSpecular = loadTexture("resources/textures/beach_texture/Seamless_beach_sand_footsteps_texture_SPECULAR.jpg");
-    unsigned int floorTextureNormal = loadTexture("resources/textures/beach_texture/Seamless_beach_sand_footsteps_texture_NORMAL.jpg");
+    unsigned int floorTextureNormal = loadTexture("resources/textures/brick_textures/brickwall_normal.jpg");
 
 
     // model lampe
