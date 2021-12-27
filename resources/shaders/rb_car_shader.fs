@@ -53,6 +53,19 @@ in VS_OUT{
     mat3 TBN;
 } fs_in;
 
+in tangent_space{
+// Direcional light direction
+    vec3 TangentDirlightDir;
+// Spotlight position & direction
+    vec3 TangentSpotlightPos[NR_SPOT_LIGHTS];
+    vec3 TangentSpotlightDir[NR_SPOT_LIGHTS];
+// Pointlight position
+    vec3 TangentPointlightPos[NR_POINT_LIGHTS];
+
+    vec3 TangentViewPos;
+    vec3 TangentFragPos;
+} ts_in;
+
 uniform vec3 viewPos;
 uniform DirLight dirLight;
 uniform PointLight pointLights[NR_POINT_LIGHTS];
@@ -73,9 +86,13 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 
+// Tangent lights applied only if hasNormalMap is true
+SpotLight tangentSpotlights[NR_SPOT_LIGHTS];
+DirLight tangentDirlight;
+PointLight tangentPointlights[NR_POINT_LIGHTS];
+
 void main()
 {
-
     vec3 norm;
 
     if(!hasNormalMap){
@@ -84,29 +101,69 @@ void main()
     else{
         norm = texture(material.texture_normal1, fs_in.TexCoords).rgb;
         norm = normalize(norm * 2.0 - 1.0);
-        norm = normalize(fs_in.TBN * norm);
     }
 
     vec3 viewDir = normalize(viewPos - fs_in.FragPos);
+    vec3 tangentViewDir = normalize(ts_in.TangentViewPos - ts_in.TangentFragPos);
 
     vec3 result = vec3(0.0f);
     if(hasDirLight == 1){
-            result = CalcDirLight(dirLight, norm,viewDir);
+            if(hasNormalMap){
+                tangentDirlight.direction = ts_in.TangentDirlightDir;
+                tangentDirlight.ambient = dirLight.ambient;
+                tangentDirlight.diffuse = dirLight.diffuse;
+                tangentDirlight.specular = dirLight.specular;
+                result += CalcDirLight(tangentDirlight, norm, tangentViewDir);
+            }
+            else{
+                result += CalcDirLight(dirLight, norm, viewDir);
+            }
     }
     if (hasPointLight == 1){
         for (int i = 0; i < NR_POINT_LIGHTS; i++){
-            result += CalcPointLight(pointLights[i], norm, fs_in.FragPos, viewDir);
+            if(hasNormalMap){
+                tangentPointlights[i].position = ts_in.TangentPointlightPos[i];
+
+                tangentPointlights[i].ambient = pointLights[i].ambient;
+                tangentPointlights[i].diffuse = pointLights[i].diffuse;
+                tangentPointlights[i].specular = pointLights[i].specular;
+
+                tangentPointlights[i].linear = pointLights[i].linear;
+                tangentPointlights[i].quadratic = pointLights[i].quadratic;
+                tangentPointlights[i].constant = pointLights[i].constant;
+                result += CalcPointLight(tangentPointlights[i], norm, ts_in.TangentFragPos, tangentViewDir);
+            }
+            else{
+                result += CalcPointLight(pointLights[i], norm, fs_in.FragPos, viewDir);
+            }
         }
     }
     if(hasSpotLight == 1){
         for (int i = 0; i < NR_SPOT_LIGHTS; i++){
             if (checkSpotlight[i] == 1){
-                result += CalcSpotLight(spotLight[i], norm, fs_in.FragPos, viewDir);
+                if(hasNormalMap){
+                    tangentSpotlights[i].position = ts_in.TangentSpotlightPos[i];
+                    tangentSpotlights[i].direction = ts_in.TangentSpotlightDir[i];
+
+                    tangentSpotlights[i].ambient = spotLight[i].ambient;
+                    tangentSpotlights[i].diffuse = spotLight[i].diffuse;
+                    tangentSpotlights[i].specular = spotLight[i].specular;
+
+                    tangentSpotlights[i].linear = spotLight[i].linear;
+                    tangentSpotlights[i].quadratic = spotLight[i].quadratic;
+                    tangentSpotlights[i].constant = spotLight[i].constant;
+
+                    tangentSpotlights[i].cutOff = spotLight[i].cutOff;
+                    tangentSpotlights[i].outerCutOff = spotLight[i].outerCutOff;
+                    result += CalcSpotLight(tangentSpotlights[i], norm, ts_in.TangentFragPos, tangentViewDir);
+                }
+                else{
+                    result += CalcSpotLight(spotLight[i], norm, fs_in.FragPos, viewDir);
+                }
             }
         }
     }
     FragColor = vec4(result, transparency);
-
 
     //FragColor = vec4(1.0);
 
