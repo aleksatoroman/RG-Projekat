@@ -63,6 +63,8 @@ out tangent_space{
     // Pointlight position
     vec3 TangentPointlightPos[NR_POINT_LIGHTS];
 
+    vec3 TangentNormalDir;
+
     vec3 TangentViewPos;
     vec3 TangentFragPos;
 } ts_out;
@@ -101,6 +103,7 @@ void main()
 
     ts_out.TangentViewPos  = TBN_inverse * viewPos;
     ts_out.TangentFragPos  = TBN_inverse * vs_out.FragPos;
+    ts_out.TangentNormalDir = normalize(TBN_inverse * vs_out.Normal);
 
     gl_Position = projection * view * vec4(vs_out.FragPos, 1.0);
 }

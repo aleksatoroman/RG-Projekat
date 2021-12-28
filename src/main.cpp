@@ -128,6 +128,9 @@ struct ProgramState {
 
     bool hasNormalMapping = false;
 
+    bool hasParallaxMapping = false;
+    float heightScale = 0.05;
+
     float tableScaleFactor = 1.5f;
     float windowScaleFactor = 1.2f;
 
@@ -199,8 +202,6 @@ Shader *skyShader;
 bool colorSky = false;
 
 bool blinn = true;
-
-float angle = 0.0f;
 
 void DrawImGui(ProgramState *programState);
 
@@ -280,6 +281,7 @@ int main() {
     Model tyresModel("resources/objects/pile-of-tires/source/tire.fbx");
     tyresModel.SetShaderTextureNamePrefix("material.");
     unsigned int tyresTextureDiffuse = loadTexture("resources/objects/pile-of-tires/textures/TexturesCom_Various_TireCar_512_albedo.png");
+    // TODO zameniti spekulrnu mapu sa skroz crnom slikom 500x500
     unsigned int tyresTextureSpecular = loadTexture("resources/objects/pile-of-tires/textures/TexturesCom_Various_TireCar_512_ao.png");
     unsigned int tyresTextureNormal = loadTexture("resources/objects/pile-of-tires/textures/TexturesCom_Various_TireCar_512_normal.png");
 
@@ -290,11 +292,11 @@ int main() {
     unsigned int platformTextureSpecular = loadTexture("resources/objects/platform/lambert1_roughness.jpg");
     unsigned int platformTextureNormal = loadTexture("resources/objects/platform/lambert1_normal.png");
 
-    // podloga teksture (asfalt diffuse i specular)
-    // TODO zameniti sa asfaltom kada se zavrsi testiranje sa normal mapping
-    unsigned int floorTextureDiffuse = loadTexture("resources/textures/brick_textures/brickwall.jpg");
-    unsigned int floorTextureSpecular = loadTexture("resources/textures/beach_texture/Seamless_beach_sand_footsteps_texture_SPECULAR.jpg");
-    unsigned int floorTextureNormal = loadTexture("resources/textures/brick_textures/brickwall_normal.jpg");
+    // podloga teksture (pescana tekstura)
+    unsigned int floorTextureDiffuse = loadTexture("resources/textures/beach_texture/Seamless_beach_sand_footsteps_texture.jpg");
+    unsigned int floorTextureSpecular = loadTexture("resources/textures/beach_texture/Seamless_beach_sand_footsteps_texture_SPECULAR.jpg.jpg");
+    unsigned int floorTextureNormal = loadTexture("resources/textures/beach_texture/Seamless_beach_sand_footsteps_texture_NORMAL.jpg");
+    unsigned int floorTextureHeigth = loadTexture("resources/textures/beach_texture/Seamless_beach_sand_footsteps_texture_DISP.jpg");
 
 
     // model lampe
@@ -323,7 +325,7 @@ int main() {
     propeler.SetShaderTextureNamePrefix("material.");
 
     // Svi objekti koji su osvetljenji lampom treba da koriste shader_rb_car
-   // TODO Namestiti senke ili normal & parallax mapping
+   // TODO Namestiti senke ili HDR|BLOOM
 
     SpotLight& spotLight = programState->spotLight;
     PointLight& pointLight = programState->pointLight;
@@ -546,6 +548,7 @@ int main() {
         // boja i dubina
         glClearColor(programState->clearColor.r, programState->clearColor.g, programState->clearColor.b, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glEnable(GL_CULL_FACE);
 
         // projection i view matrica (uglavnom ostaje ista) i treba je postaviti kasnije sa model matricom u nekom shaderu
         glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom),
@@ -562,7 +565,7 @@ int main() {
         shader_rb_car->setMat4("view", view);
         model = glm::mat4(1.0f);
         model = glm::rotate(model, glm::radians(30.0f), glm::vec3(0.0,1.0f, 0.0f));
-        //model = glm::rotate(model, 0.25f * currentFrame, glm::vec3(0.0f,1.0f,0.0f));
+        model = glm::rotate(model, 0.25f * currentFrame, glm::vec3(0.0f,1.0f,0.0f));
         model = glm::translate(model, programState->carPosition);
         shader_rb_car->setMat4("model", model);
 
@@ -671,16 +674,23 @@ int main() {
         // crtanje podloge (moze na dva nacina, standardno ili preko skyboxa, standardno moze ili sa normal mapiranjem ili bez)
         float stranica = 2.0f;
         if(!colorSky){
+            shader_rb_car->use();
+            shader_rb_car->setInt("material.texture_height1", 3);
+
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, floorTextureDiffuse);
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, floorTextureSpecular);
             glActiveTexture(GL_TEXTURE2);
             glBindTexture(GL_TEXTURE_2D, floorTextureNormal);
-            shader_rb_car->use();
+            glActiveTexture(GL_TEXTURE3);
+            glBindTexture(GL_TEXTURE_2D, floorTextureHeigth);
 
             // ako je trenutno ukljuceno, postaviti shaderu i iscrtati tako i OBAVEZNO skloniti sa shadera dok globalna provera i dalje ostaje azurna
             shader_rb_car->setBool("hasNormalMap", programState->hasNormalMapping);
+            shader_rb_car->setBool("hasParallaxMapping", programState->hasParallaxMapping);
+            shader_rb_car->setFloat("heightScale", programState->heightScale);
+
             glm::vec3 firstPosition = glm::vec3(-25.0f * stranica, -25.0f * stranica, 0.0f);
             model = glm::translate(model, firstPosition);
             for(int i = 0; i < 50; i++) {
@@ -692,7 +702,9 @@ int main() {
                     renderQuad();
                 }
             }
+            // Samo podloga se crta sa parralex mapping
             shader_rb_car->setBool("hasNormalMap", false);
+            shader_rb_car->setBool("hasParallaxMapping", false);
         }
         else{
             skyShader->use();
@@ -890,6 +902,7 @@ int main() {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, transparentTexture);
 
+        glDisable(GL_CULL_FACE);
         for(int i = 0; i < prozori.size(); ++i){
             model = glm::mat4(1.0f);
             model = glm::translate(model, prozori[i].position);
@@ -937,6 +950,21 @@ void processInput(GLFWwindow *window) {
         programState->camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         programState->camera.ProcessKeyboard(RIGHT, deltaTime);
+
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+    {
+        if (programState->heightScale > 0.0f)
+            programState->heightScale -= 0.0005f;
+        else
+            programState->heightScale = 0.0f;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+    {
+        if (programState->heightScale < 1.0f)
+            programState->heightScale += 0.0005f;
+        else
+            programState->heightScale = 1.0f;
+    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -987,8 +1015,7 @@ void DrawImGui(ProgramState *programState) {
         // point light position
         ImGui::DragFloat3("Pozicija pointlight svetla", (float*)&programState->pointLight.position);
 
-        // ugao
-        ImGui::DragFloat("Ugao rotacije podloge", &angle, 1.0f,0.0f,360.0f);
+        ImGui::DragFloat("Height scale", &programState->heightScale, 0.01f, 0.0f, 1.0f);
 
         // point light attenuation
         ImGui::InputDouble("pointLight.constant", &programState->pointLight.constant);
@@ -1120,6 +1147,9 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     }
     if(key == GLFW_KEY_N && action == GLFW_PRESS){
         programState->hasNormalMapping = !programState->hasNormalMapping;
+    }
+    if(key == GLFW_KEY_P && action == GLFW_PRESS){
+            programState->hasParallaxMapping = !programState->hasParallaxMapping;
     }
 }
 unsigned int loadTexture(char const *path)

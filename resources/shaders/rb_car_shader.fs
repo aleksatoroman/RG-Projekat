@@ -5,6 +5,7 @@ struct Material {
     sampler2D texture_diffuse1;
     sampler2D texture_specular1;
     sampler2D texture_normal1;
+    sampler2D texture_height1;
 
     float shininess;
 };
@@ -62,6 +63,8 @@ in tangent_space{
 // Pointlight position
     vec3 TangentPointlightPos[NR_POINT_LIGHTS];
 
+    vec3 TangentNormalDir;
+
     vec3 TangentViewPos;
     vec3 TangentFragPos;
 } ts_in;
@@ -81,10 +84,58 @@ uniform float transparency = 1.0;
 uniform bool blinn;
 
 uniform bool hasNormalMap = false;
+uniform bool hasParallaxMapping = false;
 
-vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
-vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
-vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
+uniform float heightScale;
+
+vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir)
+{
+    // number of depth layers
+    const float minLayers = 8.0;
+    const float maxLayers = 32.0;
+    // TODO otkriti zasto puca program kada se postavi ovo
+    float numLayers = mix(maxLayers, minLayers, abs(dot(ts_in.TangentNormalDir, viewDir)));
+    // float numLayers = maxLayers;
+    // calculate the size of each layer
+    float layerDepth = 1.0 / numLayers;
+    // depth of current layer
+    float currentLayerDepth = 0.0;
+    // the amount to shift the texture coordinates per layer (from vector P)
+    vec2 P = viewDir.xy / viewDir.z * heightScale;
+    vec2 deltaTexCoords = P / numLayers;
+
+    // get initial values
+    vec2  currentTexCoords     = texCoords;
+    float currentDepthMapValue = texture(material.texture_height1, currentTexCoords).r;
+
+    while(currentLayerDepth < currentDepthMapValue)
+    {
+        // shift texture coordinates along direction of P
+        currentTexCoords -= deltaTexCoords;
+        // get depthmap value at current texture coordinates
+        currentDepthMapValue = texture(material.texture_height1, currentTexCoords).r;
+        // get depth of next layer
+        currentLayerDepth += layerDepth;
+    }
+
+    // get texture coordinates before collision (reverse operations)
+    vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
+
+    // get depth after and before collision for linear interpolation
+    float afterDepth  = currentDepthMapValue - currentLayerDepth;
+    float beforeDepth = texture(material.texture_height1, prevTexCoords).r - currentLayerDepth + layerDepth;
+
+    // interpolation of texture coordinates
+    float weight = afterDepth / (afterDepth - beforeDepth);
+    vec2 finalTexCoords = prevTexCoords * weight + currentTexCoords * (1.0 - weight);
+
+    return finalTexCoords;
+}
+
+
+vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec2 TexCoords);
+vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec2 TexCoords);
+vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec2 TexCoords);
 
 // Tangent lights applied only if hasNormalMap is true
 SpotLight tangentSpotlights[NR_SPOT_LIGHTS];
@@ -93,18 +144,26 @@ PointLight tangentPointlights[NR_POINT_LIGHTS];
 
 void main()
 {
-    vec3 norm;
+    vec3 viewDir = normalize(viewPos - fs_in.FragPos);
+    vec3 tangentViewDir = normalize(ts_in.TangentViewPos - ts_in.TangentFragPos);
 
+    vec2 texCoords;
+
+    if(hasParallaxMapping){
+        texCoords=ParallaxMapping(fs_in.TexCoords,  tangentViewDir);
+    }
+    else{
+        texCoords = fs_in.TexCoords;
+    }
+
+    vec3 norm;
     if(!hasNormalMap){
         norm = normalize(fs_in.Normal);
     }
     else{
-        norm = texture(material.texture_normal1, fs_in.TexCoords).rgb;
+        norm = texture(material.texture_normal1, texCoords).rgb;
         norm = normalize(norm * 2.0 - 1.0);
     }
-
-    vec3 viewDir = normalize(viewPos - fs_in.FragPos);
-    vec3 tangentViewDir = normalize(ts_in.TangentViewPos - ts_in.TangentFragPos);
 
     vec3 result = vec3(0.0f);
     if(hasDirLight == 1){
@@ -113,10 +172,10 @@ void main()
                 tangentDirlight.ambient = dirLight.ambient;
                 tangentDirlight.diffuse = dirLight.diffuse;
                 tangentDirlight.specular = dirLight.specular;
-                result += CalcDirLight(tangentDirlight, norm, tangentViewDir);
+                result += CalcDirLight(tangentDirlight, norm, tangentViewDir, texCoords);
             }
             else{
-                result += CalcDirLight(dirLight, norm, viewDir);
+                result += CalcDirLight(dirLight, norm, viewDir, fs_in.TexCoords);
             }
     }
     if (hasPointLight == 1){
@@ -131,10 +190,11 @@ void main()
                 tangentPointlights[i].linear = pointLights[i].linear;
                 tangentPointlights[i].quadratic = pointLights[i].quadratic;
                 tangentPointlights[i].constant = pointLights[i].constant;
-                result += CalcPointLight(tangentPointlights[i], norm, ts_in.TangentFragPos, tangentViewDir);
+
+                result += CalcPointLight(tangentPointlights[i], norm, ts_in.TangentFragPos, tangentViewDir, texCoords);
             }
             else{
-                result += CalcPointLight(pointLights[i], norm, fs_in.FragPos, viewDir);
+                result += CalcPointLight(pointLights[i], norm, fs_in.FragPos, viewDir, fs_in.TexCoords);
             }
         }
     }
@@ -155,10 +215,11 @@ void main()
 
                     tangentSpotlights[i].cutOff = spotLight[i].cutOff;
                     tangentSpotlights[i].outerCutOff = spotLight[i].outerCutOff;
-                    result += CalcSpotLight(tangentSpotlights[i], norm, ts_in.TangentFragPos, tangentViewDir);
+
+                    result += CalcSpotLight(tangentSpotlights[i], norm, ts_in.TangentFragPos, tangentViewDir, texCoords);
                 }
                 else{
-                    result += CalcSpotLight(spotLight[i], norm, fs_in.FragPos, viewDir);
+                    result += CalcSpotLight(spotLight[i], norm, fs_in.FragPos, viewDir, fs_in.TexCoords);
                 }
             }
         }
@@ -170,7 +231,7 @@ void main()
     //FragColor = texture(material.texture_diffuse1, fs_in.TexCoords);
 
 }
-vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
+vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec2 TexCoords)
 {
     vec3 lightDir = normalize(light.position - fragPos);
     // diffuse shading
@@ -189,15 +250,15 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
     float distance = length(light.position - fragPos);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
     // combine results
-    vec3 ambient = light.ambient * vec3(texture(material.texture_diffuse1, fs_in.TexCoords));
-    vec3 diffuse = light.diffuse * diff * vec3(texture(material.texture_diffuse1, fs_in.TexCoords));
-    vec3 specular = light.specular * spec * texture(material.texture_specular1, fs_in.TexCoords).xxx;
+    vec3 ambient = light.ambient * vec3(texture(material.texture_diffuse1, TexCoords));
+    vec3 diffuse = light.diffuse * diff * vec3(texture(material.texture_diffuse1, TexCoords));
+    vec3 specular = light.specular * spec * texture(material.texture_specular1, TexCoords).xxx;
     ambient *= attenuation;
     diffuse *= attenuation;
     specular *= attenuation;
     return (ambient + diffuse + specular);
 }
-vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
+vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec2 TexCoords)
 {
     vec3 lightDir = normalize(-light.direction);
     // diffuse shading
@@ -214,13 +275,13 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
     }
 
     // combine results
-    vec3 ambient = light.ambient * vec3(texture(material.texture_diffuse1, fs_in.TexCoords));
-    vec3 diffuse = light.diffuse * diff * vec3(texture(material.texture_diffuse1, fs_in.TexCoords));
-    vec3 specular = light.specular * spec * texture(material.texture_specular1, fs_in.TexCoords).ggg;
+    vec3 ambient = light.ambient * vec3(texture(material.texture_diffuse1, TexCoords));
+    vec3 diffuse = light.diffuse * diff * vec3(texture(material.texture_diffuse1, TexCoords));
+    vec3 specular = light.specular * spec * texture(material.texture_specular1, TexCoords).ggg;
     return (ambient + diffuse + specular);
 }
 
-vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
+vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec2 TexCoords)
 {
     vec3 lightDir = normalize(light.position - fragPos);
     // diffuse shading
@@ -246,9 +307,9 @@ vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
     float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
 
     // combine results
-    vec3 ambient = light.ambient * vec3(texture(material.texture_diffuse1, fs_in.TexCoords));
-    vec3 diffuse = light.diffuse * diff * vec3(texture(material.texture_diffuse1, fs_in.TexCoords));
-    vec3 specular = light.specular * spec * texture(material.texture_specular1, fs_in.TexCoords).ggg;
+    vec3 ambient = light.ambient * vec3(texture(material.texture_diffuse1, TexCoords));
+    vec3 diffuse = light.diffuse * diff * vec3(texture(material.texture_diffuse1, TexCoords));
+    vec3 specular = light.specular * spec * texture(material.texture_specular1, TexCoords).ggg;
 
     ambient *= attenuation * intensity;
     diffuse *= attenuation * intensity;
