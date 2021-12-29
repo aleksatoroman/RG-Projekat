@@ -787,9 +787,12 @@ int main() {
         model = glm::translate(model,programState->propelerPosition );
         model= glm::rotate(model, 1.57f, glm::vec3(1.0f, 0.0f, 0.0f));
         model= glm::rotate(model, 0.25f * currentFrame, glm::vec3(0.0f, 0.0f, 1.0f));
-        spotlightShader.use();
+        shader_rb_car->use();
         shader_rb_car->setMat4("model", model);
-        propeler.Draw(spotlightShader);
+        propeler.Draw(*shader_rb_car);
+
+
+        glDisable(GL_CULL_FACE);
 
         // sijalice
         for(int i = 0; i < 4; i++){
@@ -832,7 +835,7 @@ int main() {
             spotlightShader.setMat4("model", model);
             circle.Draw(spotlightShader);
         }
-        glDisable(GL_CULL_FACE);
+
         // crtanje podloge (moze na dva nacina, standardno ili preko skyboxa, standardno moze ili sa normal mapiranjem ili bez)
         float stranica = 2.0f;
         if(!colorSky){

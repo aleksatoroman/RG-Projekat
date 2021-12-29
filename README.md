@@ -10,4 +10,5 @@ Manual:
 - Press N to switch between normal mapping and regular maping with normals from verteces
 - Press P to turn on/off parallax mapping (only works if normal mapping is on)
 - Press E-Q to change height scale on parralax mapping (only visible if parralax mapping is on)
+- Press F to change a type of face culling (front/end)
 - Press escape to exit
