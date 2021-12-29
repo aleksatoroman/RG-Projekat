@@ -1,4 +1,4 @@
-/snap/clion/175/bin/cmake/linux/bin/cmake -G "CodeBlocks - Unix Makefiles" /home/mouzhacker/RG-Projekat
+/snap/clion/178/bin/cmake/linux/bin/cmake -G "CodeBlocks - Unix Makefiles" /home/mouzhacker/RG-Projekat
 -- Found ASSIMP: /usr/lib/x86_64-linux-gnu/libassimp.so
 -- Configuring done
 -- Generating done

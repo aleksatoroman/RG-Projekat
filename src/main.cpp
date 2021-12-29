@@ -194,6 +194,8 @@ bool checkSpotlights[] = {
 };
 bool allLightsActivated = false;
 bool antialiasing=true;
+bool faceculling = false;
+
 
 ProgramState *programState;
 Shader *shader_rb_car;
@@ -549,7 +551,10 @@ int main() {
         glClearColor(programState->clearColor.r, programState->clearColor.g, programState->clearColor.b, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_CULL_FACE);
-
+        if(faceculling)
+            glCullFace(GL_FRONT);
+        else
+            glCullFace(GL_BACK);
         // projection i view matrica (uglavnom ostaje ista) i treba je postaviti kasnije sa model matricom u nekom shaderu
         glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom),
                                                 (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
@@ -671,52 +676,8 @@ int main() {
         skyShader->setMat4("view", view);
         skyShader->setVec3("cameraPos", programState->camera.Position);
 
-        // crtanje podloge (moze na dva nacina, standardno ili preko skyboxa, standardno moze ili sa normal mapiranjem ili bez)
-        float stranica = 2.0f;
-        if(!colorSky){
-            shader_rb_car->use();
-            shader_rb_car->setInt("material.texture_height1", 3);
 
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, floorTextureDiffuse);
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, floorTextureSpecular);
-            glActiveTexture(GL_TEXTURE2);
-            glBindTexture(GL_TEXTURE_2D, floorTextureNormal);
-            glActiveTexture(GL_TEXTURE3);
-            glBindTexture(GL_TEXTURE_2D, floorTextureHeigth);
-
-            // ako je trenutno ukljuceno, postaviti shaderu i iscrtati tako i OBAVEZNO skloniti sa shadera dok globalna provera i dalje ostaje azurna
-            shader_rb_car->setBool("hasNormalMap", programState->hasNormalMapping);
-            shader_rb_car->setBool("hasParallaxMapping", programState->hasParallaxMapping);
-            shader_rb_car->setFloat("heightScale", programState->heightScale);
-
-            glm::vec3 firstPosition = glm::vec3(-25.0f * stranica, -25.0f * stranica, 0.0f);
-            model = glm::translate(model, firstPosition);
-            for(int i = 0; i < 50; i++) {
-                for(int j = 0; j < 50; j++){
-                    model = glm::mat4(1.0f);
-                    model = glm::rotate(model, glm::radians(270.0f), glm::normalize(glm::vec3(1.0f,0.0f,0.0f)));
-                    model = glm::translate(model, firstPosition + glm::vec3((float)j * stranica,(float)i * stranica ,0.0f));
-                    shader_rb_car->setMat4("model", model);
-                    renderQuad();
-                }
-            }
-            // Samo podloga se crta sa parralex mapping
-            shader_rb_car->setBool("hasNormalMap", false);
-            shader_rb_car->setBool("hasParallaxMapping", false);
-        }
-        else{
-            skyShader->use();
-            model = glm::mat4(1.0f);
-            model = glm::rotate(model, glm::radians(270.0f), glm::normalize(glm::vec3(1.0f,0.0f,0.0f)));
-            model = glm::scale(model, glm::vec3(25.0f * stranica));
-            skyShader->setMat4("model", model);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-            renderQuad();
-        }
-
+        //
         //Crtanje platforme (moze isto na 2 nacina)
         model = glm::mat4(1.0f);
         model = glm::translate(model, programState->platformPosition);
@@ -871,6 +832,53 @@ int main() {
             spotlightShader.setMat4("model", model);
             circle.Draw(spotlightShader);
         }
+        glDisable(GL_CULL_FACE);
+        // crtanje podloge (moze na dva nacina, standardno ili preko skyboxa, standardno moze ili sa normal mapiranjem ili bez)
+        float stranica = 2.0f;
+        if(!colorSky){
+            shader_rb_car->use();
+            shader_rb_car->setInt("material.texture_height1", 3);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, floorTextureDiffuse);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, floorTextureSpecular);
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(GL_TEXTURE_2D, floorTextureNormal);
+            glActiveTexture(GL_TEXTURE3);
+            glBindTexture(GL_TEXTURE_2D, floorTextureHeigth);
+
+            // ako je trenutno ukljuceno, postaviti shaderu i iscrtati tako i OBAVEZNO skloniti sa shadera dok globalna provera i dalje ostaje azurna
+            shader_rb_car->setBool("hasNormalMap", programState->hasNormalMapping);
+            shader_rb_car->setBool("hasParallaxMapping", programState->hasParallaxMapping);
+            shader_rb_car->setFloat("heightScale", programState->heightScale);
+
+            glm::vec3 firstPosition = glm::vec3(-25.0f * stranica, -25.0f * stranica, 0.0f);
+            model = glm::translate(model, firstPosition);
+            for(int i = 0; i < 50; i++) {
+                for(int j = 0; j < 50; j++){
+                    model = glm::mat4(1.0f);
+                    model = glm::rotate(model, glm::radians(270.0f), glm::normalize(glm::vec3(1.0f,0.0f,0.0f)));
+                    model = glm::translate(model, firstPosition + glm::vec3((float)j * stranica,(float)i * stranica ,0.0f));
+                    shader_rb_car->setMat4("model", model);
+                    renderQuad();
+                }
+            }
+            // Samo podloga se crta sa parralex mapping
+            shader_rb_car->setBool("hasNormalMap", false);
+            shader_rb_car->setBool("hasParallaxMapping", false);
+        }
+        else{
+            skyShader->use();
+            model = glm::mat4(1.0f);
+            model = glm::rotate(model, glm::radians(270.0f), glm::normalize(glm::vec3(1.0f,0.0f,0.0f)));
+            model = glm::scale(model, glm::vec3(25.0f * stranica));
+            skyShader->setMat4("model", model);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+            renderQuad();
+        }
+
 
         //crtanje pointlight svetla
         model = glm::mat4(1.0f);
@@ -902,7 +910,7 @@ int main() {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, transparentTexture);
 
-        glDisable(GL_CULL_FACE);
+
         for(int i = 0; i < prozori.size(); ++i){
             model = glm::mat4(1.0f);
             model = glm::translate(model, prozori[i].position);
@@ -1142,6 +1150,15 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         blinn = !blinn;
         shader_rb_car->setBool("blinn", blinn);
     }
+    if(key == GLFW_KEY_F && action == GLFW_PRESS){
+        if(faceculling)
+            faceculling=!faceculling;
+        else
+            faceculling=!faceculling;
+
+
+    }
+
     if(key == GLFW_KEY_C && action == GLFW_PRESS){
         colorSky = !colorSky;
     }
