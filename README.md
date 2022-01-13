@@ -1,5 +1,9 @@
 # RG-Projekat
 Projekat iz kursa racunarske grafike koji se odrzava na 3. godini Matematickog fakulteta na smeru Informatika
+Na projektu radili Aleksa Toroman i Aleksandar Žerađanin
+
+                                            PROJEKAT FORMULA
+------------------------------------------------------------------------------------------------------------------------
 
 Manual:
 - Press buttons 1,2,3,4 to turn on/off lights.
@@ -11,4 +15,9 @@ Manual:
 - Press P to turn on/off parallax mapping (only works if normal mapping is on)
 - Press E-Q to change height scale on parralax mapping (only visible if parralax mapping is on)
 - Press F to change a type of face culling (front/end)
-- Press escape to exit
+- Press R to start auto-rotation of formula and platform (second press returns everything to default)
+- Press ESC to exit
+
+------------------------------------------------------------------------------------------------------------------------
+
+Iz grupe A, Aleksa je implementirao cubemaps, Aleksandar anti-aliasing. Iz grupe B Aleksa je implementirao normal/parralax mapping.

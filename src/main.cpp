@@ -114,7 +114,7 @@ struct ProgramState {
     SpotLight spotLight;
     PointLight pointLight;
     DirLight dirLight;
-    glm::vec3 tyresPosition = glm::vec3(6.0f, 0.39f, 0.0f);
+    glm::vec3 tyresPosition = glm::vec3(5.0f, 0.39f, -5.0f);
     glm::vec3 carPosition = glm::vec3(0.0f, 1.205f, 0.45f);
     glm::vec3 platformPosition = glm::vec3(0.0f, 0.4321f, 0.0f);
     glm::vec3 trophyPosition = glm::vec3(-5.170f,1.2f,6.6f);
@@ -123,8 +123,7 @@ struct ProgramState {
     std::vector<Prozor> prozori;
 
     glm::vec3 pipePosition=glm::vec3 (-13.0f, 2.0f, -13.0f);
-    glm::vec3 propelerPosition=glm::vec3(-0.865f, 0.27f, -0.865f);
-    glm::vec3 krugPosition=glm::vec3(4.38, 4.38f, 4.38f);
+
 
     bool hasNormalMapping = false;
 
@@ -141,6 +140,7 @@ struct ProgramState {
             glm::vec3(-5.0f, 5.0f, -5.0f),
             glm::vec3(5.0f, 5.0f, 5.0f)
     };
+
     //sijalice
     glm::vec3 circlePositions[4] = {
             glm::vec3(3.92f, 4.45f, -3.92f),
@@ -195,8 +195,7 @@ bool checkSpotlights[] = {
 bool allLightsActivated = false;
 bool antialiasing=true;
 bool faceculling = false;
-
-
+bool rotation1=false;
 ProgramState *programState;
 Shader *shader_rb_car;
 
@@ -234,7 +233,7 @@ int main() {
     glfwSetKeyCallback(window, key_callback);
     // tell GLFW to capture our mouse
 
-    // TODO , kada treba da se debaguje mora da se stavi na GLFFW_CURSOR_NORMAL inace je GLDF_CURSOR_DISABLED na pocetku
+
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // glad: load all OpenGL function pointers
@@ -283,8 +282,7 @@ int main() {
     Model tyresModel("resources/objects/pile-of-tires/source/tire.fbx");
     tyresModel.SetShaderTextureNamePrefix("material.");
     unsigned int tyresTextureDiffuse = loadTexture("resources/objects/pile-of-tires/textures/TexturesCom_Various_TireCar_512_albedo.png");
-    // TODO zameniti spekulrnu mapu sa skroz crnom slikom 500x500
-    unsigned int tyresTextureSpecular = loadTexture("resources/objects/pile-of-tires/textures/TexturesCom_Various_TireCar_512_ao.png");
+    unsigned int tyresTextureSpecular = loadTexture("resources/objects/pile-of-tires/textures/absolute-black-granite-500x500.jpg");
     unsigned int tyresTextureNormal = loadTexture("resources/objects/pile-of-tires/textures/TexturesCom_Various_TireCar_512_normal.png");
 
     //model platform
@@ -322,12 +320,7 @@ int main() {
     Model pipe("resources/objects/tube/tube.obj");
     pipe.SetShaderTextureNamePrefix("material.");
 
-    // model propeler
-    Model propeler("resources/objects/propeller/Prop5in.fbx");
-    propeler.SetShaderTextureNamePrefix("material.");
-
     // Svi objekti koji su osvetljenji lampom treba da koriste shader_rb_car
-   // TODO Namestiti senke ili HDR|BLOOM
 
     SpotLight& spotLight = programState->spotLight;
     PointLight& pointLight = programState->pointLight;
@@ -449,6 +442,7 @@ int main() {
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
+
     // transparenta tekstura - prozor
     unsigned int transparentTexture = loadTexture("resources/textures/window.png");
 
@@ -497,6 +491,7 @@ int main() {
             -1.0f, -1.0f,  1.0f,
             1.0f, -1.0f,  1.0f
     };
+
     // skyboxVAO with skybox data and texture loading from resources/textures/skybox/
     unsigned int skyboxVAO, skyboxVBO;
     glGenVertexArrays(1, &skyboxVAO);
@@ -535,7 +530,7 @@ int main() {
     // render petlja
     while (!glfwWindowShouldClose(window)) {
         // FPS lock
-        float currentFrame = (float)glfwGetTime();
+        float currentFrame=(float)glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
         // update funkcija
@@ -547,7 +542,9 @@ int main() {
                     float d2 = glm::distance(b.position, cameraPosition);
                     return  d1 > d2;
         });
+
         // boja i dubina
+
         glClearColor(programState->clearColor.r, programState->clearColor.g, programState->clearColor.b, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_CULL_FACE);
@@ -563,6 +560,7 @@ int main() {
         glm::mat4 model = glm::mat4(1.0f);
 
         //Crtanje automobila
+
         shader_rb_car->use();
         shader_rb_car->setFloat("transparency", 1.0f);
         hasLights(*shader_rb_car, true, false, true);
@@ -570,7 +568,11 @@ int main() {
         shader_rb_car->setMat4("view", view);
         model = glm::mat4(1.0f);
         model = glm::rotate(model, glm::radians(30.0f), glm::vec3(0.0,1.0f, 0.0f));
-        model = glm::rotate(model, 0.25f * currentFrame, glm::vec3(0.0f,1.0f,0.0f));
+
+        if(rotation1)
+            model = glm::rotate(model, 0.25f* currentFrame, glm::vec3(0.0f,1.0f,0.0f));
+
+
         model = glm::translate(model, programState->carPosition);
         shader_rb_car->setMat4("model", model);
 
@@ -652,9 +654,10 @@ int main() {
         carModel.Draw(*shader_rb_car);
 
         // crtanje guma
+
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(programState->tyresPosition));
-        model = glm::rotate(model, glm::radians(30.0f), glm::vec3(0.0,1.0,0.0));
+        model = glm::rotate(model, glm::radians(130.0f), glm::vec3(0.0,1.0,0.0));
         model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0,0.0,0.0));
         model = glm::scale(model, glm::vec3(0.5f,0.5f,0.5f));
         glActiveTexture(GL_TEXTURE0);
@@ -677,12 +680,16 @@ int main() {
         skyShader->setVec3("cameraPos", programState->camera.Position);
 
 
-        //
-        //Crtanje platforme (moze isto na 2 nacina)
+
+        //Crtanje platforme
+
+        float stara;
         model = glm::mat4(1.0f);
         model = glm::translate(model, programState->platformPosition);
         model = glm::scale(model, glm::vec3(0.12f, 0.12f, 0.12f));
-        model = glm::rotate(model, 0.25f * currentFrame, glm::vec3(0.0f, 1.0f, 0.0f));
+        model = glm::rotate(model, 0.25f , glm::vec3(0.0f, 1.0f, 0.0f));
+        if(rotation1)
+            model=glm::rotate(model,0.25f*currentFrame,glm::vec3(0.0f, 1.0f, 0.0f));
 
         if(!colorSky) {
             glActiveTexture(GL_TEXTURE0);
@@ -707,6 +714,7 @@ int main() {
         }
 
         // lampe (reflektori)
+
         shader_rb_car->use();
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureLamp);
@@ -740,6 +748,7 @@ int main() {
         }
 
         //trofej
+
         model = glm::mat4(1.0f);
         model = glm::translate(model, programState->trophyPosition);
         model = glm::scale(model, glm::vec3(0.02f, 0.02f, 0.02f));
@@ -750,6 +759,7 @@ int main() {
         trophy.Draw(*shader_rb_car);
 
         // sto
+
         model = glm::mat4(1.0f);
         float scale = programState->tableScaleFactor;
         model = glm::scale(model, glm::vec3(scale));
@@ -760,8 +770,9 @@ int main() {
         tableTrophy.Draw(*shader_rb_car);
 
         //pipe
+
         model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+        model = glm::scale(model, glm::vec3(0.000000000000000001f, 0.00000000000001f, 0.00000000000000001f));
         model = glm::translate(model,programState->pipePosition);
         model= glm::rotate(model, 1.57f, glm::vec3(1.0f, 0.0f, 0.0f));
         shader_rb_car->use();
@@ -770,31 +781,14 @@ int main() {
         pipe.Draw(*shader_rb_car);
         shader_rb_car->setBool("hasNormalMap", false);
 
-        //krug
+        glDisable(GL_CULL_FACE);
+
+        // sijalice
+
         spotlightShader.use();
         spotlightShader.setMat4("view", view);
         spotlightShader.setMat4("projection", projection);
         model = glm::mat4(1.0f);
-        model = glm::scale(model, programState->krugPosition);
-        model = glm::translate(model,glm::vec3(-1.485f,0.0f,-1.485f) );
-        spotlightShader.setVec3("Color",glm::vec3(0.0f));
-        spotlightShader.setMat4("model", model);
-        circle.Draw(spotlightShader);
-
-        //propeler
-        model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(7.5f, 7.5f, 7.5f));
-        model = glm::translate(model,programState->propelerPosition );
-        model= glm::rotate(model, 1.57f, glm::vec3(1.0f, 0.0f, 0.0f));
-        model= glm::rotate(model, 0.25f * currentFrame, glm::vec3(0.0f, 0.0f, 1.0f));
-        shader_rb_car->use();
-        shader_rb_car->setMat4("model", model);
-        propeler.Draw(*shader_rb_car);
-
-
-        glDisable(GL_CULL_FACE);
-
-        // sijalice
         for(int i = 0; i < 4; i++){
             glm::vec3 boja;
             model = glm::mat4(1.0f);
@@ -836,7 +830,8 @@ int main() {
             circle.Draw(spotlightShader);
         }
 
-        // crtanje podloge (moze na dva nacina, standardno ili preko skyboxa, standardno moze ili sa normal mapiranjem ili bez)
+        // podloga
+
         float stranica = 2.0f;
         if(!colorSky){
             shader_rb_car->use();
@@ -884,6 +879,7 @@ int main() {
 
 
         //crtanje pointlight svetla
+
         model = glm::mat4(1.0f);
         model = glm::scale(model, glm::vec3(10.0f));
         model = glm::translate(model, programState->pointLight.position);
@@ -892,6 +888,7 @@ int main() {
 
 
         // cubemap
+
         glDepthFunc(GL_LEQUAL);  // zbog nepreciznosti racunanja u pokretnom zarezu se postavlja ova depth funkcija
         skyboxShader.use();
         view = glm::mat4(glm::mat3(programState->camera.GetViewMatrix())); // translacija se uklanja zbog osecaja beskonacnosti
@@ -906,6 +903,7 @@ int main() {
         glDepthFunc(GL_LESS); // vracamo na feault
 
         // prozori ( blending) , mora na kraju nakon svih opaque objekata (sa alpha=1.0f) i pre skybox-a
+
         shader_rb_car->use();
         shader_rb_car->setFloat("transparency", 0.5f);
         hasLights(*shader_rb_car, true, false, true);
@@ -1165,6 +1163,9 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     if(key == GLFW_KEY_C && action == GLFW_PRESS){
         colorSky = !colorSky;
     }
+    if(key == GLFW_KEY_R && action == GLFW_PRESS) {
+      rotation1=!rotation1;
+    }
     if(key == GLFW_KEY_N && action == GLFW_PRESS){
         programState->hasNormalMapping = !programState->hasNormalMapping;
     }
@@ -1305,6 +1306,7 @@ unsigned int loadCubemap(vector<std::string> &faces)
 }
 unsigned int quadVAO = 0;
 unsigned int quadVBO;
+
 void renderQuad()
 {
     if (quadVAO == 0)
