@@ -1,6 +1,6 @@
 # RG-Projekat
-Projekat iz kursa racunarske grafike koji se odrzava na 3. godini Matematickog fakulteta na smeru Informatika
-Na projektu radili Aleksa Toroman i Aleksandar Žerađanin
+Projekat iz kursa racunarske grafike koji se odrzava na 3. godini Matematickog fakulteta na smeru Informatika.
+Na projektu radili Aleksa Toroman i Aleksandar Žerađanin.
 
                                             PROJEKAT FORMULA
 ------------------------------------------------------------------------------------------------------------------------
@@ -21,5 +21,8 @@ Manual:
 - Press ESC to exit
 
 ------------------------------------------------------------------------------------------------------------------------
+NAPOMENA:
 
-Iz grupe A, Aleksa je implementirao cubemaps, Aleksandar anti-aliasing. Iz grupe B Aleksa je implementirao normal/parralax mapping.
+Da biste videli anti-aliasing efekat (na formuli se najbolje vidi) morate da zaustavite rotaciju formule na R, i da se dosta približite jer su detalji sitni.
+Projekat obuhvata oblasti od 1. do 8. nedelje plus blending, face culling i advanced lighting.
+Iz grupe A, Aleksa je implementirao cubemaps, Aleksandar je implementirao anti-aliasing. Iz grupe B Aleksa je implementirao normal/parralax mapping.

@@ -195,7 +195,7 @@ bool checkSpotlights[] = {
 bool allLightsActivated = false;
 bool antialiasing=true;
 bool faceculling = false;
-bool rotation1=false;
+bool rotation1=true;
 ProgramState *programState;
 Shader *shader_rb_car;
 
