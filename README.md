@@ -2,6 +2,11 @@
 Projekat iz kursa racunarske grafike koji se odrzava na 3. godini Matematickog fakulteta na smeru Informatika.
 Na projektu radili Aleksa Toroman i Aleksandar Žerađanin.
 
+Napomena: Na snimku se ne vidi lepo anti-aliasing efekat, u Clionu se lepo vidi, samo je potrebno da na R zaustavite 
+rotaciju formule i da se dosta približite formuli jer su detalji sitni.
+
+Link videa: https://www.youtube.com/watch?v=74uMMDbiqTs
+
                                             PROJEKAT FORMULA
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -21,8 +26,6 @@ Manual:
 - Press ESC to exit
 
 ------------------------------------------------------------------------------------------------------------------------
-NAPOMENA:
 
-Da biste videli anti-aliasing efekat (na formuli se najbolje vidi) morate da zaustavite rotaciju formule na R, i da se dosta približite jer su detalji sitni.
 Projekat obuhvata oblasti od 1. do 8. nedelje plus blending, face culling i advanced lighting.
 Iz grupe A, Aleksa je implementirao cubemaps, Aleksandar je implementirao anti-aliasing. Iz grupe B Aleksa je implementirao normal/parallax mapping.
