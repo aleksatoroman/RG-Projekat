@@ -294,7 +294,7 @@ int main() {
 
     // podloga teksture (pescana tekstura)
     unsigned int floorTextureDiffuse = loadTexture("resources/textures/beach_texture/Seamless_beach_sand_footsteps_texture.jpg");
-    unsigned int floorTextureSpecular = loadTexture("resources/textures/beach_texture/Seamless_beach_sand_footsteps_texture_SPECULAR.jpg.jpg");
+    unsigned int floorTextureSpecular = loadTexture("resources/textures/beach_texture/Seamless_beach_sand_footsteps_texture_SPECULAR.jpg");
     unsigned int floorTextureNormal = loadTexture("resources/textures/beach_texture/Seamless_beach_sand_footsteps_texture_NORMAL.jpg");
     unsigned int floorTextureHeigth = loadTexture("resources/textures/beach_texture/Seamless_beach_sand_footsteps_texture_DISP.jpg");
 
